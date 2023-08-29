@@ -1,10 +1,12 @@
 package net.arcadiasedge.riftseeker.api;
 
 import com.google.api.client.util.Key;
+import net.arcadiasedge.riftseeker.api.partials.ApiAbility;
 import net.arcadiasedge.riftseeker.api.requests.items.FetchItemRequest;
-import net.arcadiasedge.riftseeker.items.ItemRarity;
+import net.arcadiasedge.riftseeker.items.Rarity;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class ApiItem extends ApiModel {
@@ -26,11 +28,14 @@ public class ApiItem extends ApiModel {
     @Key
     public Map<String, Integer> attributes;
 
+    @Key
+    public List<ApiAbility> abilities;
+
     public static ApiItem fetch(String id) throws IOException {
         return ApiModel.send(new FetchItemRequest(id));
     }
 
-    public ItemRarity getRarity() {
-        return ItemRarity.fromString(rarity);
+    public Rarity getRarity() {
+        return Rarity.fromString(rarity);
     }
 }

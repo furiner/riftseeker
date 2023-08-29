@@ -5,10 +5,14 @@ import de.tr7zw.nbtapi.NBT;
 import de.tr7zw.nbtapi.iface.ReadWriteItemNBT;
 import de.tr7zw.nbtapi.iface.ReadWriteNBT;
 import net.arcadiasedge.riftseeker.RiftseekerPlugin;
+import net.arcadiasedge.riftseeker.abilities.Ability;
 import net.arcadiasedge.riftseeker.api.ApiItem;
-import net.arcadiasedge.riftseeker.api.partials.ApiAbility;
+import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
 import net.arcadiasedge.riftseeker.items.attributes.ItemAttribute;
+import net.arcadiasedge.riftseeker.managers.AbilityManager;
 import net.arcadiasedge.riftseeker.managers.ItemManager;
+import net.arcadiasedge.riftseeker.utils.ColorMap;
+import net.arcadiasedge.riftseeker.utils.rarity.RarityMap;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -32,7 +36,10 @@ public class Item {
 
     public Map<String, ItemAttribute> attributes;
 
-    public List<ApiAbility> abilities;
+    /**
+     * A list of the item's abilities.
+     */
+    public List<Ability> abilities;
 
     public Item() {
         this("UNKNOWN");
@@ -41,6 +48,7 @@ public class Item {
     public Item(String id) {
         this.id = id;
         this.attributes = new HashMap<>();
+        this.abilities = new ArrayList<>();
     }
 
     public void setItemStack(ItemStack itemStack) {
@@ -58,6 +66,25 @@ public class Item {
 
             this.attributes.put(entry.getKey(), attribute);
         }
+
+        // Assign the item's abilities
+        for (var ability : apiItem.abilities) {
+            System.out.println("Ability: " + ability.name);
+            AbilityManager manager = RiftseekerPlugin.getInstance().getManager("abilities");
+            try {
+                this.abilities.add(manager.create(ability.name, this, ability));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public boolean onUse(GamePlayer player) {
+        return true;
+    }
+
+    public boolean onEquip(GamePlayer player) {
+        return true;
     }
 
     public String serialize() {

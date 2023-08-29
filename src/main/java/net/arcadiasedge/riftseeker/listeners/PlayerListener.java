@@ -1,8 +1,8 @@
 package net.arcadiasedge.riftseeker.listeners;
 
-import net.arcadiasedge.riftseeker.RiftseekerPlugin;
 import net.arcadiasedge.riftseeker.api.ApiProfile;
-import net.arcadiasedge.riftseeker.players.GamePlayer;
+import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
+import net.arcadiasedge.riftseeker.entities.statuses.TexturePackStatus;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;

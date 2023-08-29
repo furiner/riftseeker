@@ -2,16 +2,16 @@ package net.arcadiasedge.riftseeker;
 
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
-import dev.jorel.commandapi.CommandAPIConfig;
 import net.arcadiasedge.exodus.loaders.Loader;
+import net.arcadiasedge.riftseeker.loaders.AbilityLoader;
 import net.arcadiasedge.riftseeker.loaders.CommandLoader;
 import net.arcadiasedge.riftseeker.loaders.ItemLoader;
 import net.arcadiasedge.riftseeker.loaders.ListenerLoader;
-import net.arcadiasedge.riftseeker.managers.ClassManager;
-import net.arcadiasedge.riftseeker.managers.ItemManager;
-import net.arcadiasedge.riftseeker.managers.Manager;
-import net.arcadiasedge.riftseeker.managers.PlayerManager;
-import net.arcadiasedge.riftseeker.players.GamePlayer;
+import net.arcadiasedge.riftseeker.managers.*;
+import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
+import net.arcadiasedge.riftseeker.tasks.GameLoopTask;
+import net.arcadiasedge.riftseeker.world.GameWorld;
+import net.arcadiasedge.riftseeker.world.locations.TestLocation;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -34,6 +34,7 @@ public class RiftseekerPlugin extends JavaPlugin {
         this.addLoader(new ItemLoader(this));
         this.addLoader(new ListenerLoader(this));
         this.addLoader(new CommandLoader(this));
+        this.addLoader(new AbilityLoader(this));
     }
 
     @Override
@@ -49,10 +50,21 @@ public class RiftseekerPlugin extends JavaPlugin {
         CommandAPI.onEnable();
         this.managers.put("items", new ItemManager());
         this.managers.put("players", new PlayerManager());
+        this.managers.put("abilities", new AbilityManager());
 
         for (Loader<?> loader : loaders.values()) {
             loader.handle();
         }
+
+        // Create a game world.
+        GameWorld.getInstance();
+
+        // Add Test Locations
+        GameWorld.getInstance().addLocation(new TestLocation());
+
+        // Register nightmares.
+        var loop = new GameLoopTask();
+        loop.runTaskTimerAsynchronously(this, 0L, 1L);
     }
 
     @Override

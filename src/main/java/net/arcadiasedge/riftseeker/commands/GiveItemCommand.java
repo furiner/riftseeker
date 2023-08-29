@@ -4,7 +4,7 @@ import dev.jorel.commandapi.annotations.Command;
 import dev.jorel.commandapi.annotations.Default;
 import dev.jorel.commandapi.annotations.arguments.AStringArgument;
 import net.arcadiasedge.riftseeker.items.Item;
-import net.arcadiasedge.riftseeker.players.GamePlayer;
+import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;

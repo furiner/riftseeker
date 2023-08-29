@@ -4,6 +4,9 @@ import com.google.api.client.util.Key;
 
 public class ApiAbility {
     @Key
+    public String id;
+
+    @Key
     public String name;
 
     @Key
@@ -11,4 +14,10 @@ public class ApiAbility {
 
     @Key
     public int damage;
+
+    @Key
+    public int cost;
+
+    @Key
+    public String button;
 }

@@ -2,4 +2,4 @@ name: RiftseekerCore
 version: 1.0.0
 main : net.arcadiasedge.riftseeker.RiftseekerPlugin
 api-version: 1.18
-depend: [ "vespera-paper", "NBTAPI", "ExodusAPI", "ProtocolLib" ]
+depend: [ "vespera-paper", "NBTAPI", "ExodusAPI", "ProtocolLib", "Citizens" ]
