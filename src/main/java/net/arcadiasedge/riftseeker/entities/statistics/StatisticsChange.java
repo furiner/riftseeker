@@ -7,12 +7,12 @@ enum ChangeType {
 }
 
 public class StatisticsChange {
-    public String name;
+    public String statistic;
     public ChangeType type;
     public int value;
 
-    public StatisticsChange(String name, ChangeType type, int value) {
-        this.name = name;
+    public StatisticsChange(String statistic, ChangeType type, float value) {
+        this.statistic = statistic;
         this.type = type;
         this.value = value;
     }

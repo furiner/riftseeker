@@ -1,5 +1,9 @@
 package net.arcadiasedge.riftseeker.items.attributes;
 
+import net.arcadiasedge.riftseeker.statistics.StatisticBoost;
+import net.arcadiasedge.riftseeker.statistics.BoostType;
+
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -15,12 +19,10 @@ public class ItemAttribute {
     /**
      * The value of the attribute.
      */
-    public int value;
+    public float value;
 
-    /**
-     * The boosts that this attribute has.
-     */
-    public Set<ItemAttributeBoost> boosts;
+    public ItemAttribute() {
+    }
 
     /**
      * The name of the attribute.
@@ -32,8 +34,14 @@ public class ItemAttribute {
     /**
      * The value of the attribute.
      */
-    public int getValue() {
+    public float getValue() {
         return this.value;
+    }
+
+    public float getFinalValue() {
+        float finalValue = this.value;
+
+        return finalValue;
     }
 
     /**
@@ -46,26 +54,8 @@ public class ItemAttribute {
     /**
      * The value of the attribute.
      */
-    public void setValue(int value) {
+    public void setValue(float value) {
         this.value = value;
-    }
-
-    /**
-     * The boosts that this attribute has.
-     */
-    public Set<ItemAttributeBoost> getBoosts() {
-        return this.boosts;
-    }
-
-    /**
-     * The boosts that this attribute has.
-     */
-    public void setBoosts(Set<ItemAttributeBoost> boosts) {
-        this.boosts = boosts;
-    }
-
-    public void addBoost(ItemAttributeBoost boost) {
-        this.boosts.add(boost);
     }
 
     /**
@@ -74,17 +64,6 @@ public class ItemAttribute {
     @Override
     public String toString() {
         return "ItemAttribute(name=" + this.getName() + ", value=" + this.getValue() + ")";
-    }
-
-    /**
-     * Returns a hashcode for the attribute.
-     */
-    @Override
-    public int hashCode() {
-        int result = 1;
-        result = result * 59 + (this.getName() == null ? 43 : this.getName().hashCode());
-        result = result * 59 + this.getValue();
-        return result;
     }
 
     /**

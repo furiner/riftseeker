@@ -9,6 +9,7 @@ import net.arcadiasedge.riftseeker.loaders.ItemLoader;
 import net.arcadiasedge.riftseeker.loaders.ListenerLoader;
 import net.arcadiasedge.riftseeker.managers.*;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
+import net.arcadiasedge.riftseeker.tasks.AsyncGameLoopTask;
 import net.arcadiasedge.riftseeker.tasks.GameLoopTask;
 import net.arcadiasedge.riftseeker.world.GameWorld;
 import net.arcadiasedge.riftseeker.world.locations.TestLocation;
@@ -31,30 +32,38 @@ public class RiftseekerPlugin extends JavaPlugin {
         managers = new HashMap<>();
         loaders = new HashMap<>();
 
-        this.addLoader(new ItemLoader(this));
-        this.addLoader(new ListenerLoader(this));
-        this.addLoader(new CommandLoader(this));
-        this.addLoader(new AbilityLoader(this));
+        this.managers.put("items", new ItemManager());
+        this.managers.put("players", new PlayerManager());
+        this.managers.put("abilities", new AbilityManager());
+        this.managers.put("sets", new SetEffectManager());
+        this.managers.put("enchantments", new EnchantmentManager());
     }
 
     @Override
     public void onLoad() {
+        INSTANCE = this;
         CommandAPI.onLoad(new CommandAPIBukkitConfig(this).verboseOutput(true));
+
+        this.addLoader(new ItemLoader(this));
+        this.addLoader(new ListenerLoader(this));
+        this.addLoader(new CommandLoader(this));
+        this.addLoader(new AbilityLoader(this));
+        this.addLoader(new SetEffectLoader(this));
+        this.addLoader(new EnchantmentLoader(this));
     }
 
 
     @Override
     public void onEnable() {
-        INSTANCE = this;
 
         CommandAPI.onEnable();
-        this.managers.put("items", new ItemManager());
-        this.managers.put("players", new PlayerManager());
-        this.managers.put("abilities", new AbilityManager());
 
         for (Loader<?> loader : loaders.values()) {
             loader.handle();
         }
+
+        // Add Citizen's Traits.
+        CitizensAPI.getTraitFactory().registerTrait(TraitInfo.create(RiftseekerDefaultTrait.class));
 
         // Create a game world.
         GameWorld.getInstance();
@@ -87,6 +96,10 @@ public class RiftseekerPlugin extends JavaPlugin {
      */
     public void addLoader(Loader loader) {
         this.loaders.put(loader.getClass().getName(), loader);
+    }
+
+    public NamespacedKey getKey(String key) {
+        return new NamespacedKey(this, key);
     }
 
     public static RiftseekerPlugin getInstance() {

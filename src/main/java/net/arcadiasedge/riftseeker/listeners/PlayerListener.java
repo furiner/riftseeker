@@ -3,6 +3,7 @@ package net.arcadiasedge.riftseeker.listeners;
 import net.arcadiasedge.riftseeker.api.ApiProfile;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
 import net.arcadiasedge.riftseeker.entities.statuses.TexturePackStatus;
+import net.arcadiasedge.riftseeker.world.GameWorld;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -35,6 +36,9 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        GamePlayer.remove(event.getPlayer());
+        GameWorld.getInstance().removePlayer(event.getPlayer());
+
+        // Remove the player from the armor content tracker
+        PlayerInventoryListener.savedContents.remove(event.getPlayer().getUniqueId());
     }
 }

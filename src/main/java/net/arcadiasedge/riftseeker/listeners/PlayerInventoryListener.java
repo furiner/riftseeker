@@ -5,14 +5,19 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
-import com.google.gson.Gson;
 import de.tr7zw.nbtapi.NBT;
-import net.arcadiasedge.riftseeker.api.ApiModel;
-import net.arcadiasedge.riftseeker.api.requests.profiles.UpdatePlayerProfileDataRequest;
-import net.arcadiasedge.riftseeker.items.Item;
+import net.arcadiasedge.riftseeker.RiftseekerPlugin;
+import net.arcadiasedge.riftseeker.abilities.Ability;
+import net.arcadiasedge.riftseeker.abilities.ApplyType;
+import net.arcadiasedge.riftseeker.entities.GameEntity;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
-import net.arcadiasedge.riftseeker.utils.rarity.RarityMap;
+import net.arcadiasedge.riftseeker.events.PlayerEquipArmorEvent;
+import net.arcadiasedge.riftseeker.items.GameEquipmentSlot;
+import net.arcadiasedge.riftseeker.items.Item;
+import net.arcadiasedge.riftseeker.items.ItemType;
 import net.arcadiasedge.riftseeker.utils.GenericMessages;
+import net.arcadiasedge.riftseeker.utils.rarity.RarityMap;
+import net.arcadiasedge.riftseeker.world.GameWorld;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
@@ -21,27 +26,63 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class PlayerInventoryListener implements Listener {
+    public static final ConcurrentMap<UUID, ItemStack[]> savedContents = new ConcurrentHashMap<>();
+    public static final String[] armorEndings = new String[] {"_HELMET", "_CHESTPLATE", "_LEGGINGS", "_BOOTS"};
+
+    public PlayerInventoryListener() {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            savedContents.put(p.getUniqueId(), p.getInventory().getContents());
+        }
+    }
+
     @EventHandler
     public void onSwapItem(PlayerSwapHandItemsEvent event) {
         Player p = event.getPlayer();
 
         p.sendMessage(GenericMessages.NO_OFFHAND);
         event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onSwapItem(PlayerItemHeldEvent event) {
+        var p = event.getPlayer();
+        var player = GameWorld.getInstance().getPlayer(p);
+        var oldSlot = p.getInventory().getItem(event.getPreviousSlot());
+        var newSlot = p.getInventory().getItem(event.getNewSlot());
+
+        var inventory = player.getInventory();
+        var oldItem = inventory.get(oldSlot);
+        var newItem = inventory.get(newSlot);
+
+        player.onSwapItem(oldItem, newItem);
+    }
+
+    public void onEquipArmor(PlayerEquipArmorEvent event) {
+        System.out.println("Equipping armor");
+        System.out.println(event.getEquipmentSlot());
     }
 
     @EventHandler
@@ -57,14 +98,17 @@ public class PlayerInventoryListener implements Listener {
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         Player p = event.getPlayer();
-        GamePlayer player = GamePlayer.get(p);
+        GamePlayer player = GameWorld.getInstance().getPlayer(p);
+        var minimessage = MiniMessage.miniMessage();
+
+        System.out.println("Dropping item");
 
         // Check if the itemstack is in the player's inventory
         if (player != null) {
             var item = event.getItemDrop().getItemStack();
             var itemInventory = player.getInventory();
 
-            if (itemInventory.contains(item)) {
+            if (itemInventory.get(item) != null) {
                 var riftItem = player.getInventory().get(item);
                 var itemEntity = event.getItemDrop();
 
@@ -74,9 +118,10 @@ public class PlayerInventoryListener implements Listener {
                     // Setting it on the item entity prevents it from being cleared by Minecraft.
                     nbt.getCompound("Item").getCompound("tag").setUUID("ItemOwner", p.getUniqueId());
                 });
+
                 // Color the item entity to match the item rarity
-                var itemRarity = Item.colorForRarity(riftItem.baseItem.getRarity());
-                var itemName = Component.text(riftItem.baseItem.name).color(itemRarity);
+                Component itemName = minimessage.deserialize(RarityMap.fromRarity(riftItem.baseItem.getRarity()).getColorTag(riftItem.baseItem.name));
+
                 var scoreboard = Bukkit.getScoreboardManager().getMainScoreboard();
                 var container = new PacketContainer(PacketType.Play.Server.ENTITY_METADATA);
                 var team = scoreboard.registerNewTeam("riftseeker-" + itemEntity.getEntityId());
@@ -118,7 +163,7 @@ public class PlayerInventoryListener implements Listener {
         }
 
         Player p = (Player) event.getEntity();
-        GamePlayer player = GamePlayer.get(p);
+        GamePlayer player = GameWorld.getInstance().getPlayer(p);
         var itemStack = event.getItem().getItemStack();
 
         // Check if the itemstack is a riftseeker item
@@ -145,7 +190,7 @@ public class PlayerInventoryListener implements Listener {
                     nbt.mergeCompound(entityItemTag);
                 });
 
-                var riftItem = Item.from(stack);
+                var riftItem = Item.from(stack, player);
 
                 // Add the item to the player's inventory
                 player.getInventory().add(riftItem);
@@ -155,7 +200,7 @@ public class PlayerInventoryListener implements Listener {
                 // Try to convert the item to a riftseeker item,
                 // as it is likely a vanilla item.
                 var material = itemStack.getType();
-                Item riftItem = Item.create(material.toString());
+                Item riftItem = Item.create(material.toString(), player);
 
                 if (riftItem != null) {
                     // Add the item to the player's inventory
@@ -169,6 +214,8 @@ public class PlayerInventoryListener implements Listener {
         event.setCancelled(true);
     }
 
+    /*
+    fix later
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) throws IOException {
         System.out.println("Inventory closed");
@@ -177,7 +224,7 @@ public class PlayerInventoryListener implements Listener {
             return;
         }
 
-        var player = GamePlayer.get((Player) event.getPlayer());
+        var player = GameWorld.getInstance().getPlayer((Player) event.getPlayer());
         var inventory = event.getPlayer().getInventory();
         System.out.println(inventory.getContents());
 
@@ -217,5 +264,182 @@ public class PlayerInventoryListener implements Listener {
 
             ApiModel.send(new UpdatePlayerProfileDataRequest(player.getProfile()));
         }
+    }*/
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) {
+            return;
+        }
+
+        System.out.println("Inventory clicked");
+
+        var player = GameWorld.getInstance().getPlayer((Player) event.getWhoClicked());
+        var clickedInventory = event.getClickedInventory();
+
+        if (player != null && clickedInventory != null && (clickedInventory.getType() == InventoryType.CRAFTING || clickedInventory.getType() == InventoryType.PLAYER)) {
+            if (event.getSlotType() == InventoryType.SlotType.ARMOR || event.isShiftClick()) {
+                this.checkArmor((Player)event.getWhoClicked());
+            }
+        }
+    }
+
+    @EventHandler()
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            var player = GameWorld.getInstance().getPlayer(event.getPlayer());
+            var item = event.getItem();
+
+            if (item == null) {
+                return;
+            }
+
+            var isArmor = false;
+
+            for (var armorEnding : PlayerInventoryListener.armorEndings) {
+                if (item.getType().toString().contains(armorEnding)) {
+                    isArmor = true;
+                    this.checkArmor(event.getPlayer());
+                    break;
+                }
+            }
+
+            if (isArmor == true) {
+                return;
+            }
+
+            var heldItem = player.getInventory().getHeld();
+
+            // Check if the player
+            if (heldItem != null) {
+                // Get the item's right click ability
+                Ability ability;
+                for (var ab : heldItem.getAbilities()) {
+                    if (ab.getTrigger() == ClickType.RIGHT) {
+                        if ((ab.getType() == ApplyType.ARROW_HII || ab.getType() ==  ApplyType.ARROW_SHOOT) && heldItem.getItemStack().getType() == Material.BOW) {
+                            // This will be handled individually by other events.
+                            // TODO: Potentially add a bow that immediately fires, but doing so might be too similar to Hypixel Skyblock.
+                            break;
+                        }
+                        ability = ab;
+                        break;
+                    }
+                }
+            }
+        } else if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
+            var player = GameWorld.getInstance().getPlayer(event.getPlayer());
+            var heldItem = player.getInventory().getHeld();
+
+            // Check if the player
+            if (heldItem != null) {
+                if (heldItem.baseItem.getType().isRangedWeapon()) {
+                    // Treat the item as a fist.
+                    return;
+                }
+
+                // Get the item's left click ability
+                Ability ability = null;
+                for (var ab : heldItem.getAbilities()) {
+                    if (ab.getTrigger() == ClickType.LEFT) {
+                        ability = ab;
+                        break;
+                    }
+                }
+
+                if (ability != null) {
+                    if (player.hasCooldown(ability)) {
+                        return;
+                    }
+
+                    event.setCancelled(true);
+
+                    // Run the ability on a separate thread
+                    Ability finalAbility = ability;
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            List<GameEntity<?>> entities = new ArrayList<>();
+                            entities = finalAbility.execute(player);
+                            int idx = 0;
+
+                            for (var target : entities) {
+                                idx++;
+                                var damage = finalAbility.onEntityHit(player, target, idx);
+                                var critical = player.rollForCrit();
+
+                                if (critical) {
+                                    damage *= player.getStatistics().getStatistic("crit_damage").getFinalTotal();
+                                }
+
+                                target.damage(damage, critical);
+                            }
+                        }
+                    }.runTaskAsynchronously(RiftseekerPlugin.getInstance());
+
+                }
+            }
+        }
+    }
+
+    public void checkArmor(Player player) {
+        // Have to run this 1 tick later, as the player's inventory is updated after the event is called
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                // Check if the player equipped, or unequipped any armor
+                var current = player.getInventory().getArmorContents();
+                var previous = savedContents.get(player.getUniqueId());
+
+                var gamePlayer = GameWorld.getInstance().getPlayer(player);
+                var playerInventory = gamePlayer.getInventory();
+
+                System.out.println("Getting inventories");
+
+                if (previous == null) {
+                    savedContents.put(player.getUniqueId(), current);
+                    return;
+                }
+
+                var slot = EquipmentSlot.values();
+                var slotIndex = 5; // Reverse order
+
+                // Check if the player equipped/unequipped any armor
+                // Function: gamePlayer.onEquipArmor or gamePlayer.onUnequipArmor
+                for (int i = 0; i < current.length; i++) {
+                    var currentArmor = current[i];
+                    var previousArmor = previous[i];
+
+                    if (currentArmor == null && previousArmor == null) {
+                        continue;
+                    }
+
+                    var equipmentSlot = GameEquipmentSlot.fromEquipmentSlot(slot[slotIndex]);
+                    var previousItem = playerInventory.get(previousArmor);
+                    var currentItem = playerInventory.get(currentArmor);
+
+                    if (currentArmor == null && previousArmor != null) {
+                        System.out.println("Unequipped armor");
+                        gamePlayer.onUnequipArmor(previousItem, equipmentSlot);
+                    } else if (currentArmor != null && previousArmor == null) {
+                        // Equipped armor
+                        System.out.println("Equipped armor");
+                        System.out.println(currentItem);
+                        gamePlayer.onEquipArmor(currentItem, equipmentSlot);
+                    } else if (!currentArmor.equals(previousArmor)) {
+                        // Unequipped armor
+                        System.out.println("Unequipped & Reequipped new armor");
+                        gamePlayer.onUnequipArmor(currentItem, equipmentSlot);
+
+                        // Equipped armor
+                        gamePlayer.onEquipArmor(currentItem, equipmentSlot);
+                    }
+
+                    slotIndex--;
+                }
+
+                // Update the saved contents
+                savedContents.put(player.getUniqueId(), current);
+            }
+        }.runTaskLater(RiftseekerPlugin.getInstance(), 1);
     }
 }

@@ -27,11 +27,9 @@ public class ItemLoader extends ExodusLoader<Item> {
             // force a gc
             item = null;
         } catch (final IllegalAccessException | InstantiationException exception) {
-            exception.printStackTrace();
         } catch (NoSuchMethodException e) {
             // no constructor
         } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
         }
     }
 }

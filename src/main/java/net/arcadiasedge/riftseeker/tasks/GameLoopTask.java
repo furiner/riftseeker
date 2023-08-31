@@ -1,6 +1,7 @@
 package net.arcadiasedge.riftseeker.tasks;
 
 import net.arcadiasedge.riftseeker.entities.GameEntity;
+import net.arcadiasedge.riftseeker.entities.GameNPCEntity;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
 import net.arcadiasedge.riftseeker.world.GameWorld;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -13,6 +14,18 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class GameLoopTask extends BukkitRunnable {
     @Override
     public void run() {
+        for (GameEntity<?> entity : GameWorld.getInstance().getEntities()){
+            var appliedChanges = entity.getStatistics().apply();
+
+            if (appliedChanges.size() > 0) {
+                // Changes were applied, update the entity.
+                if (entity instanceof GameNPCEntity<?>) {
+                    ((GameNPCEntity<?>) entity).assignDisplayName();
+                } else {
+                    // TODO: Find shit to put here
+                }
+            }
+        }
         /*for (GameEntity entity : GameEntity.entities) {
             if (entity instanceof GamePlayer) {
                 entity.getEntity().getBoundingBox();

@@ -1,4 +1,4 @@
-package net.arcadiasedge.riftseeker.items.attributes;
+package net.arcadiasedge.riftseeker.statistics;
 
 public enum BoostType {
     Additive,

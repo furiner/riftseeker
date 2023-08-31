@@ -24,7 +24,7 @@ public final class ListenerLoader extends ExodusLoader<Listener> {
     @Override
     protected void load(Class<?> object) {
         try {
-            if (object.getName().toLowerCase().contains("listener") || object.getDeclaredConstructor(Listener.class).newInstance() instanceof Listener) {
+            if (object.getName().toLowerCase().contains("listener")) {
                 Bukkit.getLogger().log(Level.INFO, "Registering listener " + object.getName() + "...");
                 Bukkit.getLogger().log(Level.INFO, this.basePackage + "...");
                 Bukkit.getLogger().log(Level.INFO, this.plugin.getClass().getPackageName() + "...");
@@ -35,11 +35,6 @@ public final class ListenerLoader extends ExodusLoader<Listener> {
 
         } catch (final IllegalAccessException | InstantiationException exception) {
             exception.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            // no listener constructor
-            // todo: find a way to check if it has a listener constructor
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
         }
     }
 

@@ -17,6 +17,6 @@ public class ItemRarity {
     }
 
     public String getColorTag(@Nullable String value) {
-        return "<color:" + color + ">" + rarity.getName() + (value != null ? (" " + value) : "") + "</color>";
+        return "<color:" + color + ">" + rarity.getValue() + (value != null ? (" " + value) : "") + "</color>";
     }
 }

@@ -18,13 +18,13 @@ public enum Rarity {
         this.rarity = rarity;
     }
 
-    public String getName() {
+    public String getValue() {
         return rarity;
     }
 
     public static Rarity fromString(String rarity) {
         for (Rarity itemRarity : Rarity.values()) {
-            if (itemRarity.getName().equals(rarity)) {
+            if (itemRarity.getValue().equals(rarity)) {
                 return itemRarity;
             }
         }

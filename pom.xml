@@ -172,7 +172,6 @@
             <artifactId>commandapi-bukkit-shade</artifactId>
             <version>9.0.3</version>
         </dependency>
-
         <dependency>
             <groupId>de.tr7zw</groupId>
             <artifactId>item-nbt-api-plugin</artifactId>
@@ -198,6 +197,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+            <dependency>
+                <groupId>xyz.xenondevs</groupId>
+                <artifactId>particle</artifactId>
+                <version>1.8.4</version>
+            </dependency>
     </dependencies>
 
 </project>
