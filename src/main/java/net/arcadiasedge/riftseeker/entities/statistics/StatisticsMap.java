@@ -12,7 +12,7 @@ import java.util.*;
  * It is used to rigidly define base values, and to keep track of all contributors to a statistic;
  * as well as any additional boosts that may be applied to the statistic, such as buffs, equipment, etc.
  */
-public class StatisticsMap {
+public class StatisticsMap<T> {
     /**
      * The name of this statistic, such as "health", "mana", "strength", etc.
      */
@@ -21,7 +21,7 @@ public class StatisticsMap {
     /**
      * The entity that owns this statistic.
      */
-    public GameEntity<?> owner;
+    public T owner;
 
     /**
      * Contributors to the base value of this statistic, such as equipment, buffs, etc.

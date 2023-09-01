@@ -3,7 +3,7 @@ package net.arcadiasedge.riftseeker.entities;
 import de.tr7zw.nbtapi.NBT;
 import net.arcadiasedge.riftseeker.RiftseekerPlugin;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
-import net.arcadiasedge.riftseeker.entities.statistics.EntityStatistics;
+import net.arcadiasedge.riftseeker.entities.statistics.GameStatistics;
 import net.arcadiasedge.riftseeker.world.GameWorld;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -15,8 +15,6 @@ import org.bukkit.Particle;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -26,13 +24,13 @@ import java.util.Locale;
 public abstract class GameEntity<E extends Entity> {
     protected String name;
     protected E entity;
-    protected final EntityStatistics statistics = new EntityStatistics(this);
+    protected final GameStatistics<GameEntity<E>> statistics = new GameStatistics<>(this);
 
     public GameEntity(E entity) {
         this.entity = entity;
         this.name = entity != null ? entity.getName() : "Unknown";
 
-        GameEntity.entities.add(this);
+        GameWorld.getInstance().getEntities().add(this);
     }
 
     /**
@@ -55,7 +53,7 @@ public abstract class GameEntity<E extends Entity> {
      * Gets the statistics of the entity.
      * @return The statistics of the entity.
      */
-    public EntityStatistics getStatistics() {
+    public GameStatistics<GameEntity<E>> getStatistics() {
         return statistics;
     }
 
@@ -64,13 +62,13 @@ public abstract class GameEntity<E extends Entity> {
      *
      * Ultimately, this method should be used to update the entity's statistics, and
      * to make the entity do things. This method should be called by the game loop.
-     * Any method that changes a statistic should call {@link EntityStatistics#apply()}.
+     * Any method that changes a statistic should call {@link GameStatistics#apply()}.
      *
      * Additionally, any entity that is created should ideally have the NoAI tag set to
      * true, and the AI should be handled by this method. The only exception is if the
      * entity is already handled by the server, or a plugin such as Citizens.
      *
-     * @see EntityStatistics
+     * @see GameStatistics
      * @see GameNPCEntity
      */
     public abstract void update();
@@ -83,6 +81,10 @@ public abstract class GameEntity<E extends Entity> {
      */
     public abstract void setup();
 
+    /**
+     * Gets the entity that this object represents.
+     * @return The entity that this object represents.
+     */
     public E getEntity() {
         return entity;
     }

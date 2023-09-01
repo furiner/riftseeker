@@ -42,18 +42,35 @@ public class GameWorld {
         this.setWorld(Bukkit.getServer().getWorlds().get(0));
     }
 
+    /**
+     * Sets the world that this GameWorld represents.
+     * @param world The world to represent.
+     */
     public void setWorld(World world) {
         this.world = world;
     }
 
+    /**
+     * Gets the world that this GameWorld represents.
+     * @return The world that this GameWorld represents.
+     */
     public World getWorld() {
         return world;
     }
 
+    /**
+     * Adds a zone to this GameWorld.
+     * @param location The zone to add.
+     */
     public void addLocation(GameLocation location) {
         this.locations.put(location.getName(), location);
     }
 
+    /**
+     * Gets a zone by the specified location in the world.
+     * @param location The location to check the zone for.
+     * @return The zone that contains the specified location, or null if no zone contains the location.
+     */
     public GameLocation getLocationFor(Location location) {
         for (var loc : this.locations.values()) {
             if (loc.contains(location)) {

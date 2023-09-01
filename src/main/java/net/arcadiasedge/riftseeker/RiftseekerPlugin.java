@@ -3,16 +3,18 @@ package net.arcadiasedge.riftseeker;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
 import net.arcadiasedge.exodus.loaders.Loader;
-import net.arcadiasedge.riftseeker.loaders.AbilityLoader;
-import net.arcadiasedge.riftseeker.loaders.CommandLoader;
-import net.arcadiasedge.riftseeker.loaders.ItemLoader;
-import net.arcadiasedge.riftseeker.loaders.ListenerLoader;
+import net.arcadiasedge.riftseeker.entities.traits.RiftseekerDefaultTrait;
+import net.arcadiasedge.riftseeker.loaders.*;
 import net.arcadiasedge.riftseeker.managers.*;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
 import net.arcadiasedge.riftseeker.tasks.AsyncGameLoopTask;
 import net.arcadiasedge.riftseeker.tasks.GameLoopTask;
 import net.arcadiasedge.riftseeker.world.GameWorld;
 import net.arcadiasedge.riftseeker.world.locations.TestLocation;
+import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.trait.TraitInfo;
+import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -73,7 +75,9 @@ public class RiftseekerPlugin extends JavaPlugin {
 
         // Register nightmares.
         var loop = new GameLoopTask();
-        loop.runTaskTimerAsynchronously(this, 0L, 1L);
+        var asyncLoop = new AsyncGameLoopTask();
+        loop.runTaskTimer(this, 0L, 1L);
+        asyncLoop.runTaskTimerAsynchronously(this, 0L, 1L);
     }
 
     @Override

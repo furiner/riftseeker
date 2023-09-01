@@ -73,46 +73,6 @@ public class GamePlayer extends GameEntity<Player> {
     }
 
     public void onSwapItem(Item oldItem, Item newItem) {
-        var statistics = getStatistics();
-
-        if (oldItem != null && oldItem.baseItem.getType().isItem()) {
-            var oldEnchantments = oldItem.enchantments;
-
-            // Try to remove the old item's stats from the player's statistics
-            for (var statistic : statistics.getValues()) {
-                if (statistic.hasContributor(oldItem)) {
-                    statistic.removeContributor(oldItem);
-                }
-
-                for (var enchantment : oldEnchantments) {
-                    if (statistic.hasBoost(enchantment)) {
-                        statistic.removeBoosts(enchantment);
-                    }
-                }
-            }
-        }
-
-        if (newItem != null && newItem.baseItem.getType().isItem()) {
-            var newEnchantments = newItem.enchantments;
-
-            // Try to add the new item's stats to the player's statistics
-            for (var statistic : statistics.getValues()) {
-                if (newItem.attributes.containsKey(statistic.getName())) {
-                    var attribute = newItem.attributes.get(statistic.getName());
-                    statistic.setContributorValue(newItem, attribute.getFinalValue());
-                }
-            }
-
-            for (var enchantment : newEnchantments) {
-                var toApply = enchantment.onApply(newItem);
-
-                for (var boost : toApply) {
-                    var statistic = statistics.getStatistic(boost.statistic);
-                    statistic.addBoost(enchantment, boost);
-                }
-            }
-        }
-
         this.getInventory().setHeld(newItem);
     }
 
@@ -129,13 +89,15 @@ public class GamePlayer extends GameEntity<Player> {
         var inventory = this.getInventory();
         var currentEquipment = inventory.getEquipmentPiece(slot);
 
+        // TODO: This should ideally not exist.
         if (currentEquipment != null) {
-            // Remove the current equipment's stats from the player's statistics
-            this.removeStatisticFor(currentEquipment);
+            for (var statistic : statistics.getValues()) {
+                statistic.removeBoosts(currentEquipment);
+            }
         }
 
         // Add the item's stats to the player's statistics
-        this.addStatisticFor(item);
+//        this.addStatisticFor(item);
         this.inventory.setEquipmentPiece(slot, item);
 
         System.out.println("Equipped " + item.baseItem.id + " to " + slot.name());
@@ -160,7 +122,13 @@ public class GamePlayer extends GameEntity<Player> {
             if (inventory.getEquipmentPiece(slot) != null) {
                 var equipmentItem = inventory.getEquipmentPiece(slot);
 
-                this.removeStatisticFor(equipmentItem);
+                // TODO: This should ideally not exist.
+                if (equipmentItem != null) {
+                    for (var statistic : statistics.getValues()) {
+                        statistic.removeBoosts(equipmentItem);
+                    }
+                }
+
                 inventory.setEquipmentPiece(slot, null);
 
                 System.out.println("Unequipped " + equipmentItem.baseItem.id + " from " + slot.name());
@@ -181,7 +149,10 @@ public class GamePlayer extends GameEntity<Player> {
             return;
         }
 
-        this.removeStatisticFor(item);
+        // TODO: This should ideally not exist.
+        for (var statistic : statistics.getValues()) {
+            statistic.removeBoosts(item);
+        }
         this.getInventory().setEquipmentPiece(slot, null);
 
         System.out.println("Unequipped " + item.baseItem.id + " from " + slot.name());
@@ -231,37 +202,6 @@ public class GamePlayer extends GameEntity<Player> {
         return cooldowns.containsKey(ability.getId());
     }
 
-    /**
-     * Removes an enchantment from the player's statistics.
-     * <br>
-     * Note that this will not remove the enchantment from the item itself, as that
-     * would have to be done manually through the item's enchantments list.
-     * @param enchantment The enchantment to remove.
-     */
-    public void removeEnchantment(Enchantment enchantment) {
-        for (var statistic : statistics.getValues()) {
-            if (statistic.hasBoost(enchantment)) {
-                statistic.removeBoosts(enchantment);
-            }
-        }
-    }
-
-    /**
-     * Adds an enchantment to the player's statistics.
-     * <br>
-     * Note that this will not add the enchantment to the item itself, as that
-     * would have to be done manually through the item's enchantments list.
-     * @param enchantment The enchantment to add.
-     */
-    public void addEnchantment(Enchantment enchantment) {
-        var toApply = enchantment.onApply(inventory.getHeld());
-
-        for (var boost : toApply) {
-            var statistic = statistics.getStatistic(boost.statistic);
-            statistic.addBoost(enchantment, boost);
-        }
-    }
-
     public Tuple<Boolean, Float> calculateWeaponDamage(GameEntity<?> target, Item heldItem) {
         return calculateWeaponDamage(target, heldItem, null);
     }
@@ -295,6 +235,7 @@ public class GamePlayer extends GameEntity<Player> {
      */
     public Tuple<Boolean, Float> calculateWeaponDamage(GameEntity<?> target, Item heldItem, Object source) {
         var statistics = getStatistics();
+        var itemStatistics = heldItem != null ? heldItem.statistics : null;
         var statisticsTarget = target.getStatistics();
         var statisticsSnapshot = statistics.consumeSnapshot(source != null ? source : heldItem);
 
@@ -306,28 +247,30 @@ public class GamePlayer extends GameEntity<Player> {
         // Lower deense should result in more damage taken
         var targetDefense = statisticsTarget.getStatisticValue("defense");
 
-        if (heldItem != null) {
+        if (heldItem != null && heldItem.baseItem.getType().isWeapon()) {
+            playerDamage += itemStatistics.getStatisticValue("damage");
+
             // https://www.desmos.com/calculator/g13nmptjqf
             if (heldItem.baseItem.properties.getDamageType() == DamageType.MAGICAL) {
                 /// Magical Damage Calculations
                 // Scale damage with Intelligence
-                var playerIntelligence = statisticsSnapshot.get("intelligence");
+                var playerIntelligence = statisticsSnapshot.get("intelligence") + itemStatistics.getStatisticValue("intelligence");
                 finalDamage = playerDamage * (1.0f - (targetDefense / (targetDefense + 50.0f))) * (1.0f + (playerIntelligence / 100.0f));
             } else if (heldItem.baseItem.properties.getDamageType() == DamageType.PHYSICAL) {
                 /// Physical Damage Calculations
                 // Scale damage with Strength
-                var playerStrength = statisticsSnapshot.get("strength");
+                var playerStrength = statisticsSnapshot.get("strength") + itemStatistics.getStatisticValue("strength");
                 finalDamage = playerDamage * (1.0f - (targetDefense / (targetDefense + 50.0f))) * (1.0f + (playerStrength / 100.0f));
             } else if (heldItem.baseItem.properties.getDamageType() == DamageType.RANGED) {
                 /// Ranged Damage Calculations
-                var playerDexterity = statisticsSnapshot.get("dexterity");
+                var playerDexterity = statisticsSnapshot.get("dexterity") + itemStatistics.getStatisticValue("dexterity");
                 finalDamage = playerDamage * (1.0f - (targetDefense / (targetDefense + 50.0f))) * (1.0f + (playerDexterity / 100.0f));
 
                 // TODO: maybe add a check for the player's distance from the target?
             } else if (heldItem.baseItem.properties.getDamageType() == DamageType.TRUE) {
                 // True Damage Calculations
                 // Scale damage with Strength
-                var playerStrength = statisticsSnapshot.get("strength");
+                var playerStrength = statisticsSnapshot.get("strength") + itemStatistics.getStatisticValue("strength");
                 finalDamage = playerDamage * (1.0f + (playerStrength / 100.0f));
             }
         } else {
@@ -343,6 +286,7 @@ public class GamePlayer extends GameEntity<Player> {
 
         // Handle a random chance for a crit
         var isCrit = rollForCrit(statisticsSnapshot);
+
         finalDamage = finalDamage * (isCrit ? statisticsSnapshot.get("crit_damage") : 1.0f);
 
         if (getInventory().getHeld() != null) {
@@ -408,32 +352,9 @@ public class GamePlayer extends GameEntity<Player> {
     }
 
     /**
-     * Removes a contributor from every statistic.
-     * @param contributor The contributor to remove.
-     */
-    private void removeStatisticFor(Object contributor) {
-        for (var statistic : statistics.getValues()) {
-            if (statistic.hasContributor(contributor)) {
-                statistic.removeContributor(contributor);
-            }
-        }
-    }
-
-    /**
-     * Adds a contributor to every statistics that it applies to.
-     * @param contributor The contributor to apply.
-     */
-    private void addStatisticFor(Item contributor) {
-        for (var statistic : statistics.getValues()) {
-            if (!statistic.hasContributor(contributor) && contributor.attributes.containsKey(statistic.getName())) {
-                statistic.setContributorValue(contributor, contributor.attributes.get(statistic.getName()).getFinalValue());
-            }
-        }
-    }
-
-    /**
      * Applies set effects onto
      */
+    // TODO: Find a way to completely get rid of this.
     private void applySetEffects() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         List<ApiSetEffect> applied = new ArrayList<>();
 
@@ -443,36 +364,47 @@ public class GamePlayer extends GameEntity<Player> {
                 var setEffect = piece.baseItem.setEffect;
 
                 if (!applied.contains(setEffect)) {
+                    SetEffect effect;
+
                     // Check if the player has the set effect already
                     if (this.getInventory().getSetEffect(setEffect.id) != null) {
                         // Reapply the set effect
-                        var effect = this.getInventory().getSetEffect(setEffect.id);
-
-                        // Apply the set effect
-                        var count = effect.apply(this);
-
-                        if (count == 0) {
-                            // Remove the set effect
-                            this.getInventory().removeSetEffect(setEffect.id);
-                        } else {
-                            applied.add(setEffect);
-                        }
+                        effect = this.getInventory().getSetEffect(setEffect.id);
                     } else {
                         SetEffectManager sem = RiftseekerPlugin.getInstance().getManager("sets");
 
                         // Add the set effect to the player's inventory
-                        SetEffect effect = sem.create(setEffect.id);
+                        effect = sem.create(setEffect.id);
                         this.getInventory().setSetEffect(effect);
+                    }
 
-                        // Apply the set effect
-                        var count = effect.apply(this);
+                    // Apply the set effect
+                    var count = effect.getAppliedPieces(this);
 
-                        if (count == 0) {
-                            // Remove the set effect (albeit we really shouldn't be here)
-                            this.getInventory().removeSetEffect(setEffect.id);
-                        } else {
-                            applied.add(setEffect);
+                    if (count == 0) {
+                        // Remove the set effect
+                        this.getInventory().removeSetEffect(setEffect.id);
+
+                        System.out.println("Removed set effect: " + setEffect.id);
+
+                        for (var statistic : statistics.getValues()) {
+                            statistic.removeBoosts(piece);
                         }
+                    } else {
+                        var toApply = effect.getBoostsToApply(this);
+
+                        if (toApply == null) {
+                            continue;
+                        }
+
+                        System.out.println("Applying set effect: " + setEffect.id + " with " + toApply.size() + " boosts");
+
+                        for (var boost : toApply) {
+                            var statistic = statistics.getStatistic(boost.statistic);
+                            statistic.addBoost(piece, boost);
+                        }
+
+                        applied.add(setEffect);
                     }
                 }
             }

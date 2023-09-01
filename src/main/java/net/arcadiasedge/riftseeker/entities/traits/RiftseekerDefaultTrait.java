@@ -93,6 +93,10 @@ public class RiftseekerDefaultTrait extends Trait {
         }
 
         // TODO: probably a good idea to check if the entity we're hitting is something we *can* hit.
+        if (heldItem != null && !heldItem.baseItem.getType().isMeleeWeapon()) {
+            return;
+        }
+
         var damage = player.calculateWeaponDamage(entity, heldItem);
 
         if (entity.getStatistics().getStatisticValue("health") <= 0) {

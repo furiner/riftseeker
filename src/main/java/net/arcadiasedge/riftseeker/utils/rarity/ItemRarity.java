@@ -3,6 +3,9 @@ package net.arcadiasedge.riftseeker.utils.rarity;
 import net.arcadiasedge.riftseeker.items.Rarity;
 import javax.annotation.Nullable;
 
+/**
+ * A class that holds a {@link Rarity} and the associated color tag.
+ */
 public class ItemRarity {
     public Rarity rarity;
     public String color;

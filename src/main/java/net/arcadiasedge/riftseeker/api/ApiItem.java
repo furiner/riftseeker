@@ -43,6 +43,12 @@ public class ApiItem extends ApiModel {
     @Key
     public List<ApiAbility> abilities;
 
+    @Key
+    public ApiItemProperties properties;
+
+    @Key
+    public ApiItemRestrictions restrictions;
+
     public static ApiItem fetch(String id) throws IOException {
         return ApiModel.send(new FetchItemRequest(id));
     }

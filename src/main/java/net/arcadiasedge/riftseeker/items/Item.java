@@ -1,15 +1,14 @@
 package net.arcadiasedge.riftseeker.items;
 
-import com.google.common.base.CaseFormat;
 import de.tr7zw.nbtapi.NBT;
 import de.tr7zw.nbtapi.iface.ReadWriteNBT;
 import net.arcadiasedge.riftseeker.RiftseekerPlugin;
 import net.arcadiasedge.riftseeker.abilities.Ability;
 import net.arcadiasedge.riftseeker.api.ApiItem;
 import net.arcadiasedge.riftseeker.data.RiftseekerDataTypes;
-import net.arcadiasedge.riftseeker.data.UUIDDataType;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
 import net.arcadiasedge.riftseeker.entities.projectiles.GameArrow;
+import net.arcadiasedge.riftseeker.entities.statistics.GameStatistics;
 import net.arcadiasedge.riftseeker.items.attributes.ItemAttribute;
 import net.arcadiasedge.riftseeker.items.enchantments.Enchantment;
 import net.arcadiasedge.riftseeker.items.sets.SetEffect;
@@ -76,6 +75,8 @@ public class Item {
      */
     public UUID uuid;
 
+    public final GameStatistics<Item> statistics = new GameStatistics<>(this);
+
     public Item() {
         this("UNKNOWN");
     }
@@ -129,6 +130,10 @@ public class Item {
             attribute.value = entry.getValue();
 
             this.attributes.put(entry.getKey(), attribute);
+
+            if (statistics.statistics.containsKey(entry.getKey().toLowerCase())) {
+                statistics.setBaseStatistic(entry.getKey().toLowerCase(), attribute.getValue());
+            }
         }
 
         // Assign the item's abilities
@@ -151,10 +156,22 @@ public class Item {
 
     public void addEnchantment(Enchantment enchantment) {
         this.enchantments.add(enchantment);
+
+        var appliedBoosts = enchantment.onApply(this);
+        for (var boost : appliedBoosts) {
+            var statistic = this.statistics.getStatistic(boost.statistic);
+            statistic.addBoost(enchantment, boost);
+        }
     }
 
     public void removeEnchantment(Enchantment enchantment) {
         this.enchantments.remove(enchantment);
+
+        for (var statistic : this.statistics.getValues()) {
+            if (statistic.hasBoost(enchantment)) {
+                statistic.removeBoosts(enchantment);
+            }
+        }
     }
 
     public List<Ability> getAbilities() {
@@ -377,7 +394,7 @@ public class Item {
             }
 
             // Description
-            if (item.baseItem.lore != null) {
+            if (item.baseItem.lore != null && item.baseItem.lore != "") {
                 var lines = wrapText(item.baseItem.lore).split("<br>");
                 for (var line : lines) {
                     componentMap.add(serialize.apply(minimessage.deserialize("<gray>" + line)));

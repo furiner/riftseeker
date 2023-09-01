@@ -2,6 +2,7 @@ package net.arcadiasedge.riftseeker.items.sets;
 
 import de.tr7zw.nbtapi.NBT;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
+import net.arcadiasedge.riftseeker.entities.statistics.GameStatistics;
 import net.arcadiasedge.riftseeker.items.GameEquipmentSlot;
 import net.arcadiasedge.riftseeker.items.Item;
 import net.arcadiasedge.riftseeker.statistics.BoostType;
@@ -86,6 +87,20 @@ public abstract class SetEffect {
         return requiredPieces;
     }
 
+    public int getAppliedPieces(GamePlayer player) {
+        var inventory = player.getInventory();
+        var count = 0;
+
+        for (var piece : this.requiredPieces.entrySet()) {
+            if (inventory.getEquipmentPiece(piece.getKey()) != null && inventory.getEquipmentPiece(piece.getKey()).getId() == piece.getValue()) {
+                count++;
+            }
+        }
+
+        applyLore(player, count);
+        return count;
+    }
+
     /**
      * Applies the set effect to the player.
      * This method will retroactively apply the set effect to the player based off how many pieces of the set they have equipped.
@@ -95,65 +110,14 @@ public abstract class SetEffect {
      * @param player The player to apply the set effect to.
      * @return The number of pieces of the set the player has equipped.
      */
-    public int apply(GamePlayer player) {
-        var inventory = player.getInventory();
-        var count = 0;
-        var apply = true;
-        List<StatisticBoost> boosts = null;
+    public List<StatisticBoost> getBoostsToApply(GamePlayer player) {
+        var count = this.getAppliedPieces(player);
 
-        if (this.requiresAllPieces) {
-            boosts = this.getStatisticBoosts(player, this.requiredPieces.size());
-
-            // Check if the player has all of the required pieces equipped.
-            // If they do, apply the set effect to the player.
-            for (var piece : this.requiredPieces.entrySet()) {
-                if (inventory.getEquipmentPiece(piece.getKey()) == null || inventory.getEquipmentPiece(piece.getKey()).getId() != piece.getValue()) {
-                    // The player does not have the required piece equipped.
-                    System.out.println("Piece " + piece.getKey() + " is not equipped.");
-                    System.out.println("Piece: " + inventory.getEquipmentPiece(piece.getKey()));
-                    System.out.println("Piece ID: " + inventory.getEquipmentPiece(piece.getKey()).getId());
-                    System.out.println("Required ID: " + piece.getValue());
-                    apply = false;
-                    break;
-                } else {
-                    count += 1;
-                }
-            }
-        } else {
-            // Retroactively apply the set effect to the player
-            // based off how many pieces of the set they have equipped.
-            for (var piece : this.requiredPieces.entrySet()) {
-                if (inventory.getEquipmentPiece(piece.getKey()) != null && inventory.getEquipmentPiece(piece.getKey()).getId() == piece.getValue()) {
-                    count++;
-                }
-            }
-
-            if (count == 0) {
-                return 0;
-            }
-
-            boosts = this.getStatisticBoosts(player, count);
+        if (this.requiresAllPieces && count != this.requiredPieces.size()) {
+            return null;
         }
 
-        System.out.println("Boosts: " + boosts);
-
-        for (var statistic : player.getStatistics().statistics.entrySet()) {
-            statistic.getValue().removeBoosts(this); // reset boosts
-
-            if (apply) {
-                // Find the boost for this statistic
-                for (var boost : boosts) {
-                    if (boost.statistic.equals(statistic.getKey())) {
-                        System.out.println("Applying boost " + boost + " to statistic " + statistic.getKey());
-                        // Apply the boost to the statistic
-                        statistic.getValue().addBoost(this, boost);
-                    }
-                }
-            }
-        }
-
-        applyLore(player, count);
-        return count;
+        return this.getStatisticBoosts(player, count);
     }
 
     /**

@@ -38,13 +38,11 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -272,14 +270,87 @@ public class PlayerInventoryListener implements Listener {
             return;
         }
 
-        System.out.println("Inventory clicked");
 
         var player = GameWorld.getInstance().getPlayer((Player) event.getWhoClicked());
         var clickedInventory = event.getClickedInventory();
 
-        if (player != null && clickedInventory != null && (clickedInventory.getType() == InventoryType.CRAFTING || clickedInventory.getType() == InventoryType.PLAYER)) {
-            if (event.getSlotType() == InventoryType.SlotType.ARMOR || event.isShiftClick()) {
-                this.checkArmor((Player)event.getWhoClicked());
+        if (player != null && clickedInventory != null) {
+            if ((clickedInventory.getType() == InventoryType.CRAFTING || clickedInventory.getType() == InventoryType.PLAYER)) {
+                if (event.getSlotType() == InventoryType.SlotType.ARMOR || event.isShiftClick()) {
+                    this.checkArmor((Player) event.getWhoClicked());
+                }
+
+                if (event.isShiftClick()) {
+                    // Handle shift click logic similarly to vanilla minecraft, with item merging
+                    var item = event.getCurrentItem();
+
+                    if (item == null) {
+                        return;
+                    }
+
+                    if (item.getType() == Material.AIR) {
+                        return;
+                    }
+
+                    if (item.getAmount() <= 0) {
+                        return;
+                    }
+
+                    var itemSlot = clickedInventory.first(item);
+                    var gameItem = player.getInventory().get(item);
+
+                    if (gameItem == null) {
+                        return;
+                    }
+
+                    // Iterate through the player's inventory and readjust items
+                    for (ListIterator<ItemStack> it = clickedInventory.iterator(); it.hasNext(); ) {
+                        var inventoryItem = it.next();
+
+                        if (inventoryItem == null) {
+                            continue;
+                        }
+
+                        if (inventoryItem.getType() == Material.AIR) {
+                            continue;
+                        }
+
+                        if (inventoryItem.getAmount() <= 0) {
+                            continue;
+                        }
+
+                        var inventoryGameItem = player.getInventory().get(inventoryItem);
+                        var inventoryItemSlot = clickedInventory.first(inventoryItem);
+
+                        if (inventoryGameItem == null) {
+                            continue;
+                        }
+
+                        if (inventoryItemSlot == itemSlot) {
+                            continue;
+                        }
+
+                        if (inventoryGameItem.getItemStack().isSimilar(gameItem.getItemStack())) {
+                            var amount = inventoryItem.getAmount() + item.getAmount();
+                            var maxStackSize = inventoryGameItem.getItemStack().getMaxStackSize();
+
+                            // Check if the item is stackable
+                            if (inventoryItem.getAmount() < maxStackSize) {
+                                // Check if the item amount exceeds the max stack size
+                                if (amount > maxStackSize) {
+                                    var remainder = amount - maxStackSize;
+                                    inventoryItem.setAmount(maxStackSize);
+                                    item.setAmount(remainder);
+                                } else {
+                                    // Set the item amount and remove the item from the player's inventory
+                                    inventoryItem.setAmount(amount);
+                                    item.setAmount(0);
+                                    player.getInventory().remove(gameItem);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -305,6 +376,10 @@ public class PlayerInventoryListener implements Listener {
             }
 
             if (isArmor == true) {
+                if (player.getInventory().getHeld().equals(item)) {
+                    // Set held item as null
+                    player.getInventory().setHeld(null);
+                }
                 return;
             }
 

@@ -5,23 +5,28 @@ import net.arcadiasedge.riftseeker.entities.GameEntity;
 import java.util.*;
 
 /**
- * A representation of a game entity's statistics, such as health, mana, etc.
+ * A representation of a game entity or item's statistics, such as health, mana, etc.
  */
-public class EntityStatistics {
+public class GameStatistics<T> {
     /**
-     * The associated entity that these statistics belong to.
+     * The associated owner that these statistics belong to.
      */
-    public GameEntity<?> entity;
+    public T owner;
 
+    /**
+     * A queue of pending changes to be applied to the statistics.
+     * Statistics are applied in the order they are added to the queue, and are applied
+     * every game tick.
+     */
     public Queue<StatisticsChange> changes;
 
     /**
      * The statistics that this entity has.
      * Entities can have any number of statistics, and they can be modified by any number of sources.
      * More commonly, the statistics that exists are health, mana, strength, intelligence, etc.
-     * For a full list of statistics, see {@link #EntityStatistics(GameEntity)}.
+     * For a full list of statistics, see {@link #GameStatistics(T)}.
      */
-    public Map<String, StatisticsMap> statistics;
+    public Map<String, StatisticsMap<T>> statistics;
 
     /**
      * A map of snapshots of the statistics.
@@ -37,25 +42,25 @@ public class EntityStatistics {
      */
     public Map<Object, StatisticsSnapshot> snapshots;
 
-    public EntityStatistics(GameEntity entity) {
-        this.entity = entity;
+    public GameStatistics(T owner) {
+        this.owner = owner;
         this.changes = new LinkedList<>();
         this.statistics = new HashMap<>();
         this.snapshots = new HashMap<>();
 
         // Add base statistics
-        statistics.put("health", new StatisticsMap("health"));
-        statistics.put("damage", new StatisticsMap("damage", true));
-        statistics.put("true_damage", new StatisticsMap("true_damage", true));
-        statistics.put("strength", new StatisticsMap("strength", true));
-        statistics.put("intelligence", new StatisticsMap("intelligence", true));
-        statistics.put("dexterity", new StatisticsMap("dexterity", true));
-        statistics.put("defense", new StatisticsMap("defense", true));
-        statistics.put("crit_damage", new StatisticsMap("crit_damage", true));
-        statistics.put("crit_chance", new StatisticsMap("crit_chance", true));
+        statistics.put("health", new StatisticsMap<>("health"));
+        statistics.put("damage", new StatisticsMap<>("damage", true));
+        statistics.put("true_damage", new StatisticsMap<>("true_damage", true));
+        statistics.put("strength", new StatisticsMap<>("strength", true));
+        statistics.put("intelligence", new StatisticsMap<>("intelligence", true));
+        statistics.put("dexterity", new StatisticsMap<>("dexterity", true));
+        statistics.put("defense", new StatisticsMap<>("defense", true));
+        statistics.put("crit_damage", new StatisticsMap<>("crit_damage", true));
+        statistics.put("crit_chance", new StatisticsMap<>("crit_chance", true));
 
         for (var statistic : statistics.values()) {
-            statistic.owner = entity;
+            statistic.owner = owner;
         }
     }
 
@@ -64,7 +69,7 @@ public class EntityStatistics {
      * @param name The name of the statistic to get.
      * @return A {@link StatisticsMap} object representing the statistic.
      */
-    public StatisticsMap getStatistic(String name) {
+    public StatisticsMap<T> getStatistic(String name) {
         return statistics.get(name);
     }
 
@@ -72,7 +77,7 @@ public class EntityStatistics {
      * Gets a collection of all the statistics that this entity has.
      * @return A collection of all the statistics that this entity has.
      */
-    public Collection<StatisticsMap> getValues() {
+    public Collection<StatisticsMap<T>> getValues() {
         return statistics.values();
     }
 
@@ -99,7 +104,7 @@ public class EntityStatistics {
     public void setBaseStatistic(String name, float value) {
         StatisticsMap statistic = statistics.get(name);
 
-        statistic.setContributorValue(entity, value);
+        statistic.setContributorValue(owner, value);
     }
 
     /**

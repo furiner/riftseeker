@@ -20,7 +20,7 @@ public class FuckYouEnchantment extends Enchantment {
     public List<StatisticBoost> onApply(Item item) {
         return List.of(new StatisticBoost("strength") {
             @Override
-            public float getValue(GameEntity<?> player, StatisticsMap statistic) {
+            public float getValue(Object owner, StatisticsMap<?> statistic) {
                 return 9 * FuckYouEnchantment.this.getLevel();
             }
         });

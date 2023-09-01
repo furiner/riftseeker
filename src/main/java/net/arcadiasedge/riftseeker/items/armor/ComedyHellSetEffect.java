@@ -20,7 +20,7 @@ public class ComedyHellSetEffect extends SetEffect {
     public List<StatisticBoost> getStatisticBoosts(GamePlayer player, int count) {
         return List.of(new StatisticBoost("strength") {
             @Override
-            public float getValue(GameEntity<?> player, StatisticsMap statistic) {
+            public float getValue(Object owner, StatisticsMap<?> statistic) {
                 return statistic.getBaseTotal() * 1.5f;
             }
         });

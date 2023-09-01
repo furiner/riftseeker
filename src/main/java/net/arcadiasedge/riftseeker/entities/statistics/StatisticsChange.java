@@ -9,7 +9,7 @@ enum ChangeType {
 public class StatisticsChange {
     public String statistic;
     public ChangeType type;
-    public int value;
+    public float value;
 
     public StatisticsChange(String statistic, ChangeType type, float value) {
         this.statistic = statistic;

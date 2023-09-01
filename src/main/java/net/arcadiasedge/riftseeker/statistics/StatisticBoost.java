@@ -14,5 +14,5 @@ public abstract class StatisticBoost {
         this.statistic = statistic;
     }
 
-    public abstract float getValue(GameEntity<?> player, StatisticsMap statistic);
+    public abstract float getValue(Object owner, StatisticsMap<?> statistic);
 }

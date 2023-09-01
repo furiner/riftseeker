@@ -67,12 +67,9 @@ public class EnchantCommand extends RiftseekerCommand {
         }
 
         if (toRemove != null) {
-            gamePlayer.removeEnchantment(toRemove);
             heldItem.removeEnchantment(toRemove);
         }
 
-        // Add the enchantment to the item.
-        gamePlayer.addEnchantment(enchantment);
         heldItem.addEnchantment(enchantment);
 
         // Update the item's nbt.
