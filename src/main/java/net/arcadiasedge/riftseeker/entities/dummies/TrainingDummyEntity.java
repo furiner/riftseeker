@@ -1,10 +1,10 @@
 package net.arcadiasedge.riftseeker.entities.dummies;
 
-import net.arcadiasedge.riftseeker.entities.GameNPCEntity;
+import net.arcadiasedge.riftseeker.entities.NPCEntity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Zombie;
 
-public class TrainingDummyEntity extends GameNPCEntity<Zombie> {
+public class TrainingDummyEntity extends NPCEntity<Zombie> {
     public TrainingDummyEntity() {
         super(EntityType.ZOMBIE, "Training Dummy");
 

@@ -5,10 +5,10 @@ import net.arcadiasedge.riftseeker.items.DamageType;
 
 public class ApiItemProperties {
     @Key("damage_type")
-    String damageType;
+    public String damageType;
 
     @Key("max_stack")
-    int maxStack;
+    public int maxStack;
 
     public DamageType getDamageType() {
         return DamageType.fromString(damageType);

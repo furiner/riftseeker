@@ -1,13 +1,19 @@
 package net.arcadiasedge.riftseeker.listeners;
 
+import de.tr7zw.nbtapi.NBT;
+import net.arcadiasedge.riftseeker.RiftseekerPlugin;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
-import net.arcadiasedge.riftseeker.entities.projectiles.GameArrow;
+import net.arcadiasedge.riftseeker.entities.projectiles.ArrowEntity;
 import net.arcadiasedge.riftseeker.world.GameWorld;
-import org.bukkit.entity.Arrow;
+import net.citizensnpcs.api.persistence.Persist;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 public class EntityListener implements Listener {
     @EventHandler
@@ -47,7 +53,7 @@ public class EntityListener implements Listener {
                     0
             );
 
-            var arrowGameEntity = new GameArrow(player, arrowEntity, bow);
+            var arrowGameEntity = new ArrowEntity(player, arrowEntity, bow);
 
             if (arrow.attributes.containsKey("damage")) {
                 // Get the arrow's damage statistic and set its contributor value to the arrow's damage.
@@ -75,7 +81,7 @@ public class EntityListener implements Listener {
             return;
         }
 
-        var arrowEntity = (GameArrow) gameEntity;
+        var arrowEntity = (ArrowEntity) gameEntity;
 
         if (event.getHitBlock() != null) {
             GameWorld.getInstance().getEntities().remove(arrowEntity);
@@ -83,7 +89,6 @@ public class EntityListener implements Listener {
         }
 
         var shooter = arrowEntity.getOwner();
-
         var hitEntity = event.getHitEntity();
 
         var hitGameEntity = GameWorld.getInstance().getEntity(hitEntity);
@@ -94,13 +99,30 @@ public class EntityListener implements Listener {
         }
 
         if (shooter instanceof GamePlayer player) {
-            // TODO: This is not guaranteed to be the actual bow at the time of hit. (could have switched)
-            // TODO: I believe this is fixed now.
+            if (hitGameEntity instanceof GamePlayer) {
+                // We don't want people killing themselves.
+                GameWorld.getInstance().getEntities().remove(arrowEntity);
+                event.getEntity().remove();
+                return;
+            }
+
             var damage = player.calculateWeaponDamage(hitGameEntity, arrowEntity.getWeapon(), arrowEntity);
 
             System.out.println("Damage: " + damage.getA() + " " + damage.getB());
 
-            hitGameEntity.damage(damage.getB(), damage.getA());
+            hitGameEntity.damage(player, damage.getB(), damage.getA());
+        }
+    }
+
+    @EventHandler
+    public void onEntityChangeBlock(EntityChangeBlockEvent event) {
+        if (event.getEntity() instanceof FallingBlock block) {
+            PersistentDataContainer container = block.getPersistentDataContainer();
+            var isAbilityBlock = container.get(RiftseekerPlugin.getInstance().getKey("riftseeker-ability-block"), PersistentDataType.BYTE);
+
+            if (isAbilityBlock != null && isAbilityBlock == (byte) 1) {
+                event.setCancelled(true);
+            }
         }
     }
 }

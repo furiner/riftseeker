@@ -1,6 +1,6 @@
 package net.arcadiasedge.riftseeker.items.weapons.bows;
 
-import net.arcadiasedge.riftseeker.entities.projectiles.GameArrow;
+import net.arcadiasedge.riftseeker.entities.projectiles.ArrowEntity;
 import net.arcadiasedge.riftseeker.items.Item;
 
 public class ThinBow extends Item {
@@ -9,7 +9,7 @@ public class ThinBow extends Item {
     }
 
     @Override
-    public void onArrowShoot(GameArrow arrow) {
+    public void onArrowShoot(ArrowEntity arrow) {
         System.out.println("Bow arrow shoot");
 
         super.onArrowShoot(arrow);

@@ -1,15 +1,11 @@
 package net.arcadiasedge.riftseeker.abilities;
 
-import com.google.common.util.concurrent.Futures;
 import net.arcadiasedge.riftseeker.api.partials.ApiAbility;
 import net.arcadiasedge.riftseeker.entities.GameEntity;
-import net.arcadiasedge.riftseeker.entities.GameNPCEntity;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
 import net.arcadiasedge.riftseeker.items.Item;
 import net.arcadiasedge.riftseeker.world.GameWorld;
 import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 import xyz.xenondevs.particle.ParticleBuilder;
@@ -17,16 +13,16 @@ import xyz.xenondevs.particle.ParticleEffect;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
 
 public class EnmityAbility extends Ability {
     public EnmityAbility(Item item, ApiAbility ability) {
         this.setItem(item);
         this.setApiAbility(ability);
     }
+
     @Override
     public float calculateDamage(GamePlayer player, GameEntity<?> target) {
-        return 0.0f;
+        return 10.0f;
     }
 
     @Override
@@ -90,6 +86,8 @@ public class EnmityAbility extends Ability {
                 }
             }
         }
+
+        System.out.println("EnmityAbility.execute(): " + targets.size() + " targets found.");
 
         return targets;
     }

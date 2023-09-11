@@ -136,8 +136,6 @@ public class GamePlayerInventory {
             return null;
         }
 
-        System.out.println("Item stack: " + itemStack);
-
         // Get the item's UUID
         ItemMeta itemMeta = itemStack.getItemMeta();
         PersistentDataContainer container = itemMeta.getPersistentDataContainer();
@@ -156,8 +154,15 @@ public class GamePlayerInventory {
 
             return item;
         } else {
-            return null;
+            // Check for an item with the same item stack
+            for (Item item : this.items.values()) {
+                if (item.itemStack == itemStack) {
+                    return item;
+                }
+            }
         }
+
+        return null;
     }
 
     /**
@@ -166,6 +171,7 @@ public class GamePlayerInventory {
      * @param item The item to set.
      */
     public void setHeld(Item item) {
+        player.onSwapItem(this.held, item);
         this.held = item;
     }
 

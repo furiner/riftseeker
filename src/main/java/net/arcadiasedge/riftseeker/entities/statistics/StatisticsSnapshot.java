@@ -1,12 +1,16 @@
 package net.arcadiasedge.riftseeker.entities.statistics;
 
+import java.util.List;
 import java.util.Map;
 
 public class StatisticsSnapshot {
     private final Map<String, Float> values;
 
-    public StatisticsSnapshot(Map<String, Float> values) {
+    private final List<Object> contributors;
+
+    public StatisticsSnapshot(Map<String, Float> values, List<Object> contributors) {
         this.values = values;
+        this.contributors = contributors;
     }
 
     public float get(String statistic) {
@@ -17,7 +21,8 @@ public class StatisticsSnapshot {
         values.put(statistic, value);
     }
 
-    public void getAll(Map<String, Float> map) {
-        map.putAll(values);
+    public List<Object> getContributors() {
+        return contributors;
     }
+
 }

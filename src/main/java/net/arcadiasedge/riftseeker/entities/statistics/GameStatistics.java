@@ -1,6 +1,9 @@
 package net.arcadiasedge.riftseeker.entities.statistics;
 
 import net.arcadiasedge.riftseeker.entities.GameEntity;
+import net.arcadiasedge.riftseeker.items.Item;
+import net.arcadiasedge.riftseeker.items.sets.SetEffect;
+import net.minecraft.stats.Stat;
 
 import java.util.*;
 
@@ -163,6 +166,58 @@ public class GameStatistics<T> {
         return appliedChanges;
     }
 
+    public void addItem(Item item) {
+        if (item == null) {
+            return;
+        }
+
+        for (var attribute : item.attributes.values()) {
+            if (!statistics.containsKey(attribute.name)) {
+                continue;
+            }
+
+            var map = statistics.get(attribute.name);
+            map.setContributorValue(item, attribute.value);
+        }
+
+        for (var enchantment : item.enchantments) {
+            var boosts = enchantment.onApply(item);
+
+            for (var boost : boosts) {
+                if (!statistics.containsKey(boost.statistic)) {
+                    continue;
+                }
+
+                var map = statistics.get(boost.statistic);
+                map.addBoost(enchantment, boost);
+            }
+        }
+    }
+
+    public void removeItem(Item item) {
+        if (item == null) {
+            return;
+        }
+
+        for (var attribute : item.attributes.values()) {
+            if (!statistics.containsKey(attribute.name)) {
+                continue;
+            }
+
+            var map = statistics.get(attribute.name);
+
+            if (map.hasContributor(item)) {
+                map.removeContributor(item);
+            }
+        }
+
+        for (var enchantment : item.enchantments) {
+            for (var statistic : this.statistics.values()) {
+                statistic.removeBoosts(enchantment);
+            }
+        }
+    }
+
     /**
      * Takes a snapshot of the current statistics at the time of calling this method.
      * This will overwrite any existing snapshot for the given source.
@@ -181,14 +236,33 @@ public class GameStatistics<T> {
         var stats = new HashMap<String, Float>();
 
         for (var statistic : statistics.values()) {
+            
             if (statistic.getName() == "health") {
                 stats.put(statistic.name, statistic.getCurrent());
             } else {
                 stats.put(statistic.name, statistic.getFinalTotal());
             }
+            
+            for (var contributor : statistic.getContributors()) {
+                if (contributor == null) {
+                    continue;
+                }
+
+                if (contributor instanceof Item item) {
+                    // Handle enchantment boosts
+                }
+            }
         }
 
-        var newSnapshot = new StatisticsSnapshot(stats);
+        var contributors = new ArrayList<>();
+
+
+
+        //        for (var contributor : contributors) {
+//            contributors.add(contributor);
+//        }
+
+        var newSnapshot = new StatisticsSnapshot(stats, contributors);
         snapshots.put(source, newSnapshot);
     }
 

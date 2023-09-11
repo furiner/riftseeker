@@ -102,6 +102,10 @@ public class StatisticsMap<T> {
         return contributors.containsKey(contributor);
     }
 
+    public Collection<Object> getContributors() {
+        return contributors.keySet();
+    }
+
     /**
      * Sets a contributor to this statistic, and sets its value.
      * This method also updates the current value of this statistic.

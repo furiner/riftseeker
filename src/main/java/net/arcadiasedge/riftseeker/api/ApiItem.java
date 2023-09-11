@@ -38,7 +38,7 @@ public class ApiItem extends ApiModel {
     public ApiSetEffect setEffect;
 
     @Key
-    public Map<String, Integer> attributes;
+    public Map<String, Float> attributes;
 
     @Key
     public List<ApiAbility> abilities;
@@ -59,5 +59,9 @@ public class ApiItem extends ApiModel {
 
     public ItemType getType() {
         return ItemType.fromString(type);
+    }
+
+    public int getMaxStack() {
+        return properties.maxStack;
     }
 }

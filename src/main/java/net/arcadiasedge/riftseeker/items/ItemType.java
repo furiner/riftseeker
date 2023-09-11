@@ -7,7 +7,13 @@ public enum ItemType {
 
     STAFF("STAFF"),
     SWORD("SWORD"),
-    BOW("BOW");
+    BOW("BOW"),
+    HAMMER("HAMMER"),
+
+    HELMET("HELMET"),
+    CHESTPLATE("CHESTPLATE"),
+    LEGGINGS("LEGGINGS"),
+    BOOTS("BOOTS");
 
     private final String value;
 
@@ -28,7 +34,7 @@ public enum ItemType {
     }
 
     public boolean isMeleeWeapon() {
-        return this == ItemType.SWORD || this == ItemType.STAFF;
+        return this == ItemType.SWORD || this == ItemType.STAFF || this == ItemType.HAMMER;
     }
 
     public boolean isRangedWeapon() {
@@ -36,7 +42,11 @@ public enum ItemType {
     }
 
     public boolean isEquipment() {
-        return this == ItemType.EQUIPMENT;
+        return this == ItemType.EQUIPMENT || this.isArmor();
+    }
+
+    public boolean isArmor() {
+        return this == ItemType.HELMET || this == ItemType.CHESTPLATE || this == ItemType.LEGGINGS || this == ItemType.BOOTS;
     }
 
     public static ItemType fromString(String rarity) {

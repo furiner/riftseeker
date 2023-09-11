@@ -18,7 +18,7 @@ public abstract class Enchantment {
     private final String name;
     private int level;
     private int maxLevel;
-    private ItemType itemType;
+    private Item item;
 
     public Enchantment() {
         this.name = this.id = "UNKNOWN";
@@ -30,6 +30,22 @@ public abstract class Enchantment {
         this.name = name;
         this.level = 1;
         this.maxLevel = 10; // Standard
+    }
+
+    /**
+     * Gets the ID of the enchantment.
+     * @return The ID of the enchantment.
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Gets the name of the enchantment.
+     * @return The name of the enchantment.
+     */
+    public String getName() {
+        return name;
     }
 
     /**
@@ -74,37 +90,15 @@ public abstract class Enchantment {
         this.maxLevel = maxLevel;
     }
 
-    /**
-     * Gets the type of item that this enchantment is applied to.
-     * @return The type of item that this enchantment is applied to.
-     */
-    public ItemType getItemType() {
-        return itemType;
+    public Item getItem() {
+        return item;
     }
 
-    /**
-     * Sets the type of item that this enchantment is applied to.
-     * @param type The type of item that this enchantment is applied to.
-     */
-    public void setItemType(ItemType type) {
-        this.itemType = type;
+    public void setItem(Item item) {
+        this.item = item;
     }
 
-    /**
-     * Gets the ID of the enchantment.
-     * @return The ID of the enchantment.
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * Gets the name of the enchantment.
-     * @return The name of the enchantment.
-     */
-    public String getName() {
-        return name;
-    }
+    public abstract boolean canApply(Item item);
 
     /**
      * Called when the enchantment is applied to an item.
@@ -121,6 +115,4 @@ public abstract class Enchantment {
      * @param damage The amount of damage that is going to be dealt to the entity.
      */
     public abstract void onHit(GameEntity<?> entity, float damage);
-
-    public abstract boolean canEnchant(Item item);
 }

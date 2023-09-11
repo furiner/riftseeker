@@ -2,6 +2,7 @@ package net.arcadiasedge.riftseeker.entities;
 
 import de.tr7zw.nbtapi.NBT;
 import net.arcadiasedge.riftseeker.RiftseekerPlugin;
+import net.arcadiasedge.riftseeker.entities.effects.StatusEffect;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
 import net.arcadiasedge.riftseeker.entities.statistics.GameStatistics;
 import net.arcadiasedge.riftseeker.world.GameWorld;
@@ -14,7 +15,10 @@ import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
+import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -26,9 +30,12 @@ public abstract class GameEntity<E extends Entity> {
     protected E entity;
     protected final GameStatistics<GameEntity<E>> statistics = new GameStatistics<>(this);
 
+    protected List<StatusEffect> effects;
+
     public GameEntity(E entity) {
         this.entity = entity;
         this.name = entity != null ? entity.getName() : "Unknown";
+        this.effects = new ArrayList<>();
 
         GameWorld.getInstance().getEntities().add(this);
     }
@@ -69,7 +76,7 @@ public abstract class GameEntity<E extends Entity> {
      * entity is already handled by the server, or a plugin such as Citizens.
      *
      * @see GameStatistics
-     * @see GameNPCEntity
+     * @see NPCEntity
      */
     public abstract void update();
 
@@ -95,59 +102,65 @@ public abstract class GameEntity<E extends Entity> {
      * @param amount The amount to damage the entity by. This should be calculated by the opponent's statistics. Commonly from {@link GamePlayer#calculateWeaponDamage(GameEntity)}
      * @param isCritical Whether this damage is a critical hit.
      */
-    public void damage(float amount, boolean isCritical) {
-        var healthStatistic = this.getStatistics().getStatistic("health");
+    public void damage(GameEntity<?> damager, float amount, boolean isCritical) {
+        return;
+    }
 
-        this.getStatistics().subtract("health", amount);
+    public void giveEffect(StatusEffect effect) {
+        effects.add(effect);
+        effect.setEntity(this);
 
-        if (this instanceof GamePlayer) {
-            ((GamePlayer) this).getEntity().setHealth(0);
-        } else if (this instanceof GameNPCEntity) {
-            var npc = ((GameNPCEntity) this);
+        reapplyEffect(effect);
 
-            // Create an invisible ArmorStand
-            var as = npc.getEntity().getWorld().spawn(new Location(entity.getWorld(), 0, 255, 0), ArmorStand.class);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                effects.remove(effect);
+                effect.unapply();
 
-            NBT.modify(as, nbt -> {
-                nbt.setBoolean("Invisible", true);
-                nbt.setBoolean("Invulnerable", true);
-                nbt.setBoolean("NoGravity", true);
-                nbt.setBoolean("Marker", true);
-                nbt.setBoolean("CustomNameVisible", true);
-
-                Component component;
-
-                if (isCritical == true) {
-                    // This is a critical hit.
-                    component = MiniMessage.miniMessage().deserialize("<white>✧ <color:#73c3f5>" + String.format(Locale.US, "%,.0f", amount) + " <white>✧");
-                } else {
-                    component = MiniMessage.miniMessage().deserialize("<gray>" + String.format(Locale.US, "%,.0f", amount));
+                // Remove each boost this effect gave
+                for (var statistic : getStatistics().getValues()) {
+                    if (statistic.hasBoost(effect)) {
+                        statistic.removeBoosts(effect);
+                    }
                 }
+            }
+        }.runTaskLater(RiftseekerPlugin.getInstance(), effect.getLength());
+    }
 
-                nbt.setString("CustomName", GsonComponentSerializer.gson().serialize(component));
-            });
-
-            // Move the armor stand to a random location around the entity
-            as.teleport(npc.getEntity().getLocation().add(Math.random() * 2 - 1, 0.5 + Math.random() * 2 - 1, Math.random() * 2 - 1));
-
-            // Remove it after a few seconds
-            RiftseekerPlugin.getInstance().getServer().getScheduler().runTaskLater(RiftseekerPlugin.getInstance(), as::remove, 20);
+    public boolean hasEffect(Class<? extends StatusEffect> effect) {
+        for (StatusEffect e : effects) {
+            if (e.getClass().equals(effect)) {
+                return true;
+            }
         }
 
-        if (healthStatistic.getCurrent() <= 0) {
-            if (this instanceof GameNPCEntity<?>) {
-                // Play dying animation
-                var npc = ((GameNPCEntity<?>) this);
-                npc.getEntity().playEffect(EntityEffect.DEATH);
+        return false;
+    }
 
-                Bukkit.getScheduler().runTaskLater(RiftseekerPlugin.getInstance(), () -> {
-                    var location = npc.getEntity().getLocation();
-
-                    // Remove the entity
-                    npc.getEntity().remove();
-                    location.getWorld().spawnParticle(Particle.CLOUD, location, 0);
-                }, 10);
+    public void modifyEffect(StatusEffect effect) {
+        for (StatusEffect e : effects) {
+            if (e.getClass().equals(effect.getClass())) {
+                e.setLevel(effect.getLevel());
+                reapplyEffect(e);
+                return;
             }
+        }
+    }
+
+    private void reapplyEffect(StatusEffect effect) {
+        // Remove each boost this effect gave
+        for (var statistic : this.getStatistics().getValues()) {
+            if (statistic.hasBoost(effect)) {
+                statistic.removeBoosts(effect);
+            }
+        }
+
+        var boosts = effect.apply();
+
+        // Apply each boost this effect gives
+        for (var boost : boosts) {
+            this.getStatistics().getStatistic(boost.statistic).addBoost(effect, boost);
         }
     }
 }

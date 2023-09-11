@@ -2,10 +2,8 @@ package net.arcadiasedge.riftseeker.items.sets;
 
 import de.tr7zw.nbtapi.NBT;
 import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
-import net.arcadiasedge.riftseeker.entities.statistics.GameStatistics;
 import net.arcadiasedge.riftseeker.items.GameEquipmentSlot;
-import net.arcadiasedge.riftseeker.items.Item;
-import net.arcadiasedge.riftseeker.statistics.BoostType;
+import net.arcadiasedge.riftseeker.manufacturers.ItemManufacturer;
 import net.arcadiasedge.riftseeker.statistics.StatisticBoost;
 
 import java.util.*;
@@ -101,6 +99,14 @@ public abstract class SetEffect {
         return count;
     }
 
+    public void onApply(GamePlayer player, int count) {
+        return;
+    }
+
+    public void onRemove(GamePlayer player) {
+        return;
+    }
+
     /**
      * Applies the set effect to the player.
      * This method will retroactively apply the set effect to the player based off how many pieces of the set they have equipped.
@@ -137,7 +143,7 @@ public abstract class SetEffect {
                 NBT.modify(piece.itemStack, (nbt) -> {
                     System.out.println("NBT: " + nbt);
                     nbt.setInteger("SetCount", count);
-                    Item.constructLore(piece, nbt, player);
+                    ItemManufacturer.constructLore(piece, nbt, player);
                 });
             }
         }

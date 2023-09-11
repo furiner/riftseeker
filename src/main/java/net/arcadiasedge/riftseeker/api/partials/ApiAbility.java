@@ -13,10 +13,10 @@ public class ApiAbility {
     public String lore;
 
     @Key
-    public int damage;
+    public float damage;
 
     @Key
-    public int cost;
+    public float cost;
 
     @Key
     public String button;

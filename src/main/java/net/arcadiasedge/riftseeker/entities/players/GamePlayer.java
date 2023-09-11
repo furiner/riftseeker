@@ -14,11 +14,13 @@ import net.arcadiasedge.riftseeker.items.ItemType;
 import net.arcadiasedge.riftseeker.items.enchantments.Enchantment;
 import net.arcadiasedge.riftseeker.items.sets.SetEffect;
 import net.arcadiasedge.riftseeker.managers.SetEffectManager;
+import net.arcadiasedge.riftseeker.players.Profile;
 import net.arcadiasedge.riftseeker.world.GameWorld;
 import net.arcadiasedge.riftseeker.world.locations.GameLocation;
 import net.minecraft.util.Tuple;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.spigotmc.SpigotConfig;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -33,7 +35,7 @@ public class GamePlayer extends GameEntity<Player> {
      * This should not be used to get player's statistics, as it is not updated in real-time.
      * Instead, use {@link GamePlayer#statistics} to get the player's statistics.
      */
-    public ApiProfile profile;
+    public Profile profile;
 
     /**
      * The player's current inventory, which is used to store custom Riftseeker items and armor.
@@ -57,7 +59,7 @@ public class GamePlayer extends GameEntity<Player> {
     public GamePlayer(ApiProfile profile, Player player) {
         super(player);
 
-        this.profile = profile;
+        this.profile = new Profile(profile);
         this.inventory = new GamePlayerInventory(this);
         this.texturePackStatus = TexturePackStatus.Loading;
         this.location = GameWorld.UnknownLocation.UNKNOWN_LOCATION;
@@ -68,12 +70,19 @@ public class GamePlayer extends GameEntity<Player> {
         return inventory;
     }
 
-    public ApiProfile getProfile() {
+    public Profile getProfile() {
         return profile;
     }
 
     public void onSwapItem(Item oldItem, Item newItem) {
-        this.getInventory().setHeld(newItem);
+        var map = this.getStatistics();
+        if (oldItem != null) {
+            map.removeItem(oldItem);
+        }
+
+        if (newItem != null) {
+            map.addItem(newItem);
+        }
     }
 
     public void onEquipArmor(Item item, GameEquipmentSlot slot) {
@@ -91,26 +100,17 @@ public class GamePlayer extends GameEntity<Player> {
 
         // TODO: This should ideally not exist.
         if (currentEquipment != null) {
-            for (var statistic : statistics.getValues()) {
-                statistic.removeBoosts(currentEquipment);
-            }
+           statistics.removeItem(currentEquipment);
         }
 
         // Add the item's stats to the player's statistics
-//        this.addStatisticFor(item);
         this.inventory.setEquipmentPiece(slot, item);
 
-        System.out.println("Equipped " + item.baseItem.id + " to " + slot.name());
+        statistics.addItem(item);
 
         try {
             this.applySetEffects();
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -125,23 +125,15 @@ public class GamePlayer extends GameEntity<Player> {
                 // TODO: This should ideally not exist.
                 if (equipmentItem != null) {
                     for (var statistic : statistics.getValues()) {
-                        statistic.removeBoosts(equipmentItem);
+                        statistic.removeContributor(equipmentItem);
                     }
                 }
 
                 inventory.setEquipmentPiece(slot, null);
 
-                System.out.println("Unequipped " + equipmentItem.baseItem.id + " from " + slot.name());
-
                 try {
                     this.applySetEffects();
-                } catch (InvocationTargetException e) {
-                    throw new RuntimeException(e);
-                } catch (NoSuchMethodException e) {
-                    throw new RuntimeException(e);
-                } catch (InstantiationException e) {
-                    throw new RuntimeException(e);
-                } catch (IllegalAccessException e) {
+                } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -153,19 +145,12 @@ public class GamePlayer extends GameEntity<Player> {
         for (var statistic : statistics.getValues()) {
             statistic.removeBoosts(item);
         }
-        this.getInventory().setEquipmentPiece(slot, null);
 
-        System.out.println("Unequipped " + item.baseItem.id + " from " + slot.name());
+        this.getInventory().setEquipmentPiece(slot, null);
 
         try {
             this.applySetEffects();
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -178,7 +163,7 @@ public class GamePlayer extends GameEntity<Player> {
      */
     public void addCooldown(Ability ability, int ticks) {
         cooldowns.put(ability.getId(), ticks);
-        System.out.println("Removed cooldown for " + ability.getId());
+        System.out.println("Added cooldown for " + ability.getId());
 
         // Remove the cooldown after the specified amount of ticks
         new BukkitRunnable() {
@@ -234,8 +219,8 @@ public class GamePlayer extends GameEntity<Player> {
      * @return A tuple containing the final damage value, along with whether the damage was a crit.
      */
     public Tuple<Boolean, Float> calculateWeaponDamage(GameEntity<?> target, Item heldItem, Object source) {
-        var statistics = getStatistics();
-        var itemStatistics = heldItem != null ? heldItem.statistics : null;
+//        var statistics = getStatistics();
+        var appliedItems = new ArrayList<Item>();
         var statisticsTarget = target.getStatistics();
         var statisticsSnapshot = statistics.consumeSnapshot(source != null ? source : heldItem);
 
@@ -243,35 +228,35 @@ public class GamePlayer extends GameEntity<Player> {
         var playerDamage = statisticsSnapshot.get("damage");
         var finalDamage = 0.0f;
 
+
         // Damage reduction algorithm
         // Lower deense should result in more damage taken
         var targetDefense = statisticsTarget.getStatisticValue("defense");
 
         if (heldItem != null && heldItem.baseItem.getType().isWeapon()) {
-            playerDamage += itemStatistics.getStatisticValue("damage");
+            appliedItems.add(heldItem);
 
             // https://www.desmos.com/calculator/g13nmptjqf
             if (heldItem.baseItem.properties.getDamageType() == DamageType.MAGICAL) {
                 /// Magical Damage Calculations
                 // Scale damage with Intelligence
-                var playerIntelligence = statisticsSnapshot.get("intelligence") + itemStatistics.getStatisticValue("intelligence");
+                var playerIntelligence = statisticsSnapshot.get("intelligence");
                 finalDamage = playerDamage * (1.0f - (targetDefense / (targetDefense + 50.0f))) * (1.0f + (playerIntelligence / 100.0f));
             } else if (heldItem.baseItem.properties.getDamageType() == DamageType.PHYSICAL) {
                 /// Physical Damage Calculations
                 // Scale damage with Strength
-                var playerStrength = statisticsSnapshot.get("strength") + itemStatistics.getStatisticValue("strength");
+                var playerStrength = statisticsSnapshot.get("strength");
                 finalDamage = playerDamage * (1.0f - (targetDefense / (targetDefense + 50.0f))) * (1.0f + (playerStrength / 100.0f));
             } else if (heldItem.baseItem.properties.getDamageType() == DamageType.RANGED) {
                 /// Ranged Damage Calculations
-                var playerDexterity = statisticsSnapshot.get("dexterity") + itemStatistics.getStatisticValue("dexterity");
+                var playerDexterity = statisticsSnapshot.get("dexterity");
                 finalDamage = playerDamage * (1.0f - (targetDefense / (targetDefense + 50.0f))) * (1.0f + (playerDexterity / 100.0f));
 
                 // TODO: maybe add a check for the player's distance from the target?
             } else if (heldItem.baseItem.properties.getDamageType() == DamageType.TRUE) {
                 // True Damage Calculations
                 // Scale damage with Strength
-                var playerStrength = statisticsSnapshot.get("strength") + itemStatistics.getStatisticValue("strength");
-                finalDamage = playerDamage * (1.0f + (playerStrength / 100.0f));
+                finalDamage = statisticsSnapshot.get("true_damage");
             }
         } else {
             // We're attacking with a fist, which is technically physical
@@ -303,7 +288,7 @@ public class GamePlayer extends GameEntity<Player> {
     @Override
     public void update() {
         // Ultimately, this is a no-op, but it's here for consistency
-        // and incase we ever need to do something with the player
+        // and in case we ever need to do something with the player
         // entity.
         var statistics = getStatistics();
         var inventory = getInventory();
@@ -332,6 +317,7 @@ public class GamePlayer extends GameEntity<Player> {
         statistics.getStatistic("health").setContributorValue(this, 100.0f);
         statistics.getStatistic("defense").setContributorValue(this, 1.0f);
         statistics.getStatistic("damage").setContributorValue(this, 10.0f);
+        statistics.getStatistic("true_damage").setContributorValue(this, 1.0f);
         statistics.getStatistic("strength").setContributorValue(this, 5.0f);
         statistics.getStatistic("intelligence").setContributorValue(this, 5.0f);
         statistics.getStatistic("crit_chance").setContributorValue(this, 0.15f); // 15%
@@ -385,7 +371,6 @@ public class GamePlayer extends GameEntity<Player> {
                         // Remove the set effect
                         this.getInventory().removeSetEffect(setEffect.id);
 
-                        System.out.println("Removed set effect: " + setEffect.id);
 
                         for (var statistic : statistics.getValues()) {
                             statistic.removeBoosts(piece);

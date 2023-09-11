@@ -39,6 +39,7 @@ public class RiftseekerPlugin extends JavaPlugin {
         this.managers.put("abilities", new AbilityManager());
         this.managers.put("sets", new SetEffectManager());
         this.managers.put("enchantments", new EnchantmentManager());
+        this.managers.put("entities", new GameEntityManager());
     }
 
     @Override
@@ -52,6 +53,7 @@ public class RiftseekerPlugin extends JavaPlugin {
         this.addLoader(new AbilityLoader(this));
         this.addLoader(new SetEffectLoader(this));
         this.addLoader(new EnchantmentLoader(this));
+        this.addLoader(new GameEntityLoader(this));
     }
 
 

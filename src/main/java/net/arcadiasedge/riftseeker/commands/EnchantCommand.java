@@ -9,6 +9,7 @@ import net.arcadiasedge.riftseeker.entities.players.GamePlayer;
 import net.arcadiasedge.riftseeker.items.Item;
 import net.arcadiasedge.riftseeker.items.enchantments.Enchantment;
 import net.arcadiasedge.riftseeker.managers.EnchantmentManager;
+import net.arcadiasedge.riftseeker.manufacturers.ItemManufacturer;
 import net.arcadiasedge.riftseeker.world.GameWorld;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -44,7 +45,7 @@ public class EnchantCommand extends RiftseekerCommand {
         var heldItem = gamePlayer.getInventory().getHeld();
         enchantment.setLevel(level);
 
-        if (heldItem.baseItem.getType() != enchantment.getItemType()) {
+        if (!enchantment.canApply(heldItem)) {
             player.sendMessage(Component.text("This enchantment cannot be applied to this item.").color(NamedTextColor.RED));
             return;
         }
@@ -73,6 +74,6 @@ public class EnchantCommand extends RiftseekerCommand {
         heldItem.addEnchantment(enchantment);
 
         // Update the item's nbt.
-        Item.constructNbtData(heldItem, gamePlayer);
+        ItemManufacturer.constructNbtData(heldItem, gamePlayer);
     }
 }

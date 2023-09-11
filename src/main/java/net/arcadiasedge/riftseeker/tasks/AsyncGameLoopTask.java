@@ -1,7 +1,6 @@
 package net.arcadiasedge.riftseeker.tasks;
 
 import net.arcadiasedge.riftseeker.entities.GameEntity;
-import net.arcadiasedge.riftseeker.entities.GameNPCEntity;
 import net.arcadiasedge.riftseeker.world.GameWorld;
 import org.bukkit.scheduler.BukkitRunnable;
 
