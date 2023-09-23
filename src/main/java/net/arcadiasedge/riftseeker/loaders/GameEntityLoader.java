@@ -7,7 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Modifier;
 
-public class GameEntityLoader extends RiftseekerLoader<GameEntity> {
+public class  GameEntityLoader extends RiftseekerLoader<GameEntity> {
     public GameEntityLoader(JavaPlugin plugin) {
         super(GameEntity.class, "net.arcadiasedge.riftseeker.entities", RiftseekerPlugin.getInstance().getClassManager("entities"));
     }

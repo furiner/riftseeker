@@ -11,27 +11,17 @@ public class FetchPlayerProfileRequest extends ApiRequest<ApiProfile> {
     private final String profileId;
 
     public FetchPlayerProfileRequest(UUID playerUuid) {
+        super(HttpMethod.Get, "/api/v1/riftseeker/profiles/" + playerUuid.toString() + "?active=true");
+
         this.playerUuid = playerUuid;
         this.profileId = null;
     }
 
     public FetchPlayerProfileRequest(UUID playerUuid, String profileId) {
+        super(HttpMethod.Get, "/api/v1/riftseeker/profiles/" + playerUuid.toString() + "/" + profileId);
+
         this.playerUuid = playerUuid;
         this.profileId = profileId;
-    }
-
-    @Override
-    public HttpMethod getMethod() {
-        return HttpMethod.Get;
-    }
-
-    @Override
-    public String getUrl() {
-        if (profileId != null) {
-            return "/api/v1/riftseeker/profiles/" + playerUuid.toString() + "/" + profileId;
-        } else {
-            return "/api/v1/riftseeker/profiles/" + playerUuid.toString() + "?active=true";
-        }
     }
 
     @Override

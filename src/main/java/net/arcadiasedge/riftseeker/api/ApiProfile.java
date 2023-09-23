@@ -6,26 +6,21 @@ import net.arcadiasedge.riftseeker.api.partials.ApiSkill;
 import net.arcadiasedge.riftseeker.api.requests.profiles.CreatePlayerProfileRequest;
 import net.arcadiasedge.riftseeker.api.requests.profiles.FetchPlayerProfileRequest;
 import net.arcadiasedge.vespera.common.VesperaClient;
-import net.arcadiasedge.vespera.common.api.models.Player;
+import net.arcadiasedge.vespera.common.api.models.ApiPlayer;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
 public class ApiProfile extends ApiModel {
-    @Key
     public Number level;
 
-    @Key
     public Number xp;
 
-    @Key
-    public Player player;
+    public ApiPlayer player;
 
-    @Key
     public Map<String, ApiSkill> skills;
 
-    @Key
     public Map<String, ApiInventoryData> inventory;
 
     public static ApiProfile fetch(UUID uuid) throws IOException {

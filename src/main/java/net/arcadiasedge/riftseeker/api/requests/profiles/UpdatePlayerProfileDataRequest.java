@@ -9,7 +9,10 @@ import net.arcadiasedge.vespera.common.api.requests.HttpMethod;
 
 public class UpdatePlayerProfileDataRequest extends ApiRequest<Void> {
     private final ApiProfile profile;
+
     public UpdatePlayerProfileDataRequest(ApiProfile profile) {
+        super(HttpMethod.Put, "/api/v1/riftseeker/profiles/" + profile.player.id + "/" + profile.id + "/data");
+
         this.profile = profile;
     }
 
@@ -18,13 +21,4 @@ public class UpdatePlayerProfileDataRequest extends ApiRequest<Void> {
         return new JsonHttpContent(new GsonFactory(), profile);
     }
 
-    @Override
-    public HttpMethod getMethod() {
-        return HttpMethod.Put;
-    }
-
-    @Override
-    public String getUrl() {
-        return "/api/v1/riftseeker/profiles/" + profile.player.id + "/" + profile.id + "/data";
-    }
 }

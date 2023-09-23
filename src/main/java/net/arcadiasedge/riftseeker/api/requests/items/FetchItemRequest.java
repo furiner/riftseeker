@@ -8,17 +8,9 @@ public class FetchItemRequest extends ApiRequest<ApiItem> {
     private final String id;
 
     public FetchItemRequest(String id) {
+        super(HttpMethod.Get, "/api/v1/riftseeker/items/" + id);
+
         this.id = id;
-    }
-
-    @Override
-    public HttpMethod getMethod() {
-        return HttpMethod.Get;
-    }
-
-    @Override
-    public String getUrl() {
-        return "/api/v1/riftseeker/items/" + this.id;
     }
 
     @Override

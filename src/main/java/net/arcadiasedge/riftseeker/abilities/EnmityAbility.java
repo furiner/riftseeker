@@ -51,6 +51,7 @@ public class EnmityAbility extends Ability {
         for (var i = 0; i < 20; i++) {
             particleLocation.add(offset);
 
+            // Spawn a metric fuckton of small particles in a line.
             new ParticleBuilder(ParticleEffect.FIREWORKS_SPARK, particleLocation)
                     .setAmount(1)
                     .setSpeed(0)

@@ -45,6 +45,8 @@ public class Item {
      */
     public Map<String, ItemAttribute> attributes;
 
+    public ItemStatistics statistics;
+
     /**
      * A list of the item's abilities.
      */
@@ -68,6 +70,7 @@ public class Item {
     public Item(String id) {
         this.id = id;
         this.attributes = new HashMap<>();
+        this.statistics = new ItemStatistics();
         this.abilities = new ArrayList<>();
         this.enchantments = new ArrayList<>();
         this.uuid = UUID.randomUUID();
@@ -84,6 +87,10 @@ public class Item {
     // TODO: Generalize this and make GameProjectile instead; as snowballs are a thing.
     public void onArrowShoot(ArrowEntity arrow) {
         return;
+    }
+
+    public ItemStack getItemStack() {
+        return itemStack;
     }
 
     /**
@@ -111,29 +118,19 @@ public class Item {
 
         // Assign the item's attributes
         for (var entry : apiItem.attributes.entrySet()) {
-            var attribute = new ItemAttribute();
-            attribute.name = entry.getKey();
-            attribute.value = entry.getValue();
-
-            this.attributes.put(entry.getKey(), attribute);
+            this.attributes.put(entry.getKey(), new ItemAttribute(entry.getKey(), entry.getValue()));
+            this.statistics.setAttribute(new ItemAttribute(entry.getKey(), entry.getValue()));
         }
 
         // Assign the item's abilities
         for (var ability : apiItem.abilities) {
-            System.out.println("Ability: " + ability.name);
             AbilityManager manager = RiftseekerPlugin.getInstance().getManager("abilities");
             try {
                 this.abilities.add(manager.create(ability.name.replace(" ", ""), this, ability));
-                System.out.println("Added ability: " + ability.name);
-                System.out.println("Abilities: " + this.abilities);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-    }
-
-    public ItemStack getItemStack() {
-        return itemStack;
     }
 
     public void addEnchantment(Enchantment enchantment) {

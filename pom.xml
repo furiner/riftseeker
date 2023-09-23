@@ -124,6 +124,15 @@
             <id>citizens-repo</id>
             <url>https://maven.citizensnpcs.co/repo</url>
         </repository>
+        <repository>
+            <id>xenondevs</id>
+            <url>https://repo.xenondevs.xyz/releases</url>
+        </repository>
+        <repository>
+            <id>catalyst-snapshots</id>
+            <name>Catalyst</name>
+            <url>https://repo.arcadiasedge.net/snapshots</url>
+        </repository>
 
     </repositories>
 
@@ -202,6 +211,23 @@
                 <artifactId>particle</artifactId>
                 <version>1.8.4</version>
             </dependency>
+        <dependency>
+            <groupId>org.javatuples</groupId>
+            <artifactId>javatuples</artifactId>
+            <version>1.2</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.stefvanschie.inventoryframework</groupId>
+            <artifactId>IF</artifactId>
+            <version>0.10.11</version>
+        </dependency>
+        <dependency>
+            <groupId>xyz.xenondevs.invui</groupId>
+            <artifactId>invui</artifactId>
+            <version>1.15</version>
+            <type>pom</type>
+        </dependency>
     </dependencies>
 
 </project>

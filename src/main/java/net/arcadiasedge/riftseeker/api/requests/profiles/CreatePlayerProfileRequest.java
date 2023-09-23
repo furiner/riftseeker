@@ -10,17 +10,9 @@ public class CreatePlayerProfileRequest extends ApiRequest<ApiProfile> {
     private final UUID playerUuid;
 
     public CreatePlayerProfileRequest(UUID playerUuid) {
+        super(HttpMethod.Post, "/api/v1/riftseeker/profiles/" + playerUuid.toString());
+
         this.playerUuid = playerUuid;
-    }
-
-    @Override
-    public HttpMethod getMethod() {
-        return HttpMethod.Post;
-    }
-
-    @Override
-    public String getUrl() {
-        return "/api/v1/riftseeker/profiles/" + playerUuid.toString();
     }
 
     @Override

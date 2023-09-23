@@ -70,14 +70,14 @@ public class ItemManufacturer {
         ItemMeta meta = itemStack.getItemMeta();
         PersistentDataContainer container = meta.getPersistentDataContainer();
 
-        if (item.baseItem.getMaxStack() == 1) {
-            // Set a UUID for the item, as there can only be one of this item in a stack.
-        container.set(RiftseekerPlugin.getInstance().getKey("item-uuid"), RiftseekerDataTypes.UUID, item.uuid);
-        itemStack.setItemMeta(meta);
-        }
-
         item.itemStack = itemStack;
         item.setApiItem(apiItem);
+
+        if (item.baseItem.getMaxStack() == 1) {
+            // Set a UUID for the item, as there can only be one of this item in a stack.
+            container.set(RiftseekerPlugin.getInstance().getKey("item-uuid"), RiftseekerDataTypes.UUID, item.uuid);
+            itemStack.setItemMeta(meta);
+        }
 
         constructNbtData(item, holder);
         return item;

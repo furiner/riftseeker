@@ -1,6 +1,7 @@
 package net.arcadiasedge.riftseeker.api;
 
 import com.google.api.client.util.Key;
+import com.google.gson.annotations.SerializedName;
 import net.arcadiasedge.riftseeker.api.partials.ApiAbility;
 import net.arcadiasedge.riftseeker.api.partials.ApiItemProperties;
 import net.arcadiasedge.riftseeker.api.partials.ApiItemRestrictions;
@@ -15,38 +16,30 @@ import java.util.List;
 import java.util.Map;
 
 public class ApiItem extends ApiModel {
-    @Key
     public String name;
 
-    @Key
     public String material;
 
-    @Key
     String rarity;
 
-    @Key
     public String lore;
 
-    @Key("type")
+    @SerializedName("type")
     public String type;
 
-    @Key
     public String kind;
 
-    @Key("set_effect")
+    @SerializedName("set_effect")
+
     @Nullable
     public ApiSetEffect setEffect;
 
-    @Key
     public Map<String, Float> attributes;
 
-    @Key
     public List<ApiAbility> abilities;
 
-    @Key
     public ApiItemProperties properties;
 
-    @Key
     public ApiItemRestrictions restrictions;
 
     public static ApiItem fetch(String id) throws IOException {

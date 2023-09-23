@@ -107,7 +107,24 @@ public abstract class NPCEntity<E extends Entity> extends GameEntity<E> {
      */
     public abstract void onSpawn();
 
-    public void onHit(GameEntity<?> damager, float amount, boolean isCritical) {
+    /**
+     * This method is called when the entity hits another entity. It should be used
+     * to handle any hit-related logic, such as updating the entity's statistics.
+     * @param target The entity that was hit.
+     * @param amount The amount of damage dealt.
+     */
+    public void onAttack(GameEntity<?> target, float amount) {
+        return;
+    }
+
+    /**
+     * This method is called when the entity is damaged. It should be used to handle
+     * any damage-related logic, such as updating the entity's health.
+     * @param damager The entity that damaged this entity.
+     * @param amount The amount of damage dealt.
+     * @param isCritical Whether or not the damage was a critical hit.
+     */
+    public void onAttacked(GameEntity<?> damager, float amount, boolean isCritical) {
         if (damagers.containsKey(damager)) {
             damagers.put(damager, damagers.get(damager) + amount);
         } else {
@@ -115,6 +132,12 @@ public abstract class NPCEntity<E extends Entity> extends GameEntity<E> {
         }
     }
 
+    /**
+     * This method is called when the entity dies. It should be used to handle any
+     * death-related logic, such as removing the entity from the world, as well
+     * as any loot-related logic.
+     * @param killer The entity that scored the killing blow.
+     */
     public void onDeath(GameEntity<?> killer) {
         getEntity().playEffect(EntityEffect.DEATH);
 
@@ -160,6 +183,7 @@ public abstract class NPCEntity<E extends Entity> extends GameEntity<E> {
         GameWorld.getInstance().getEntities().add(this);
 
         this.npc.spawn(location);
+        this.onSpawn();
         this.entity = (E) this.npc.getEntity();
     }
 
@@ -214,7 +238,7 @@ public abstract class NPCEntity<E extends Entity> extends GameEntity<E> {
         if (healthStatistic.getCurrent() - amount <= 0) {
             this.onDeath(damager);
         } else {
-            this.onHit(damager, amount, isCritical);
+            this.onAttacked(damager, amount, isCritical);
         }
     }
 

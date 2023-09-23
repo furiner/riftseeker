@@ -23,6 +23,10 @@ public class ItemAttribute {
 
     public ItemAttribute() {
     }
+    public ItemAttribute(String name, float value) {
+        this.name = name;
+        this.value = value;
+    }
 
     /**
      * The name of the attribute.
